@@ -74,17 +74,19 @@ _(tu respuesta)_
 
 Solo o en pareja. Parte de la plantilla [`plantilla-ejercicio2/explorar_relaciones.py`](./plantilla-ejercicio2/explorar_relaciones.py) y córrela desde su carpeta (`cd plantilla-ejercicio2`, `python3 explorar_relaciones.py`): lee el mismo `starter/viajes_taxi.csv`. Quita solo los errores que el Ejercicio 1 ya confirmó y completa los 5 `TODO`: dispersión de distancia contra tarifa, propina por método de pago, correlaciones con la tarifa, y pasajeros vacíos o en 0.
 
+Tras quitar los 25 errores confirmados (tarifa 999.99 y duración negativa) quedan **2975 viajes**.
+
 **Hallazgo 1: qué muestra el gráfico de distancia contra tarifa, además de la tendencia general.**
 
-_(tu hallazgo, con el número que lo confirma)_
+La tendencia es lineal (correlación distancia–tarifa de **0.96**), pero hay una **franja horizontal en 70 USD** que no depende de la distancia: **300 viajes** con tarifa exacta de 70, de 0 a 45 km, y **los 300 tienen origen o destino en JFK Airport**. Es la tarifa fija del aeropuerto, no un error: por eso el IQR del Ejercicio 1 los marcaba como atípicos sin serlo. Un modelo lineal sobre la distancia los predeciría mal; necesita saber si el viaje es de JFK.
 
 **Hallazgo 2: qué pasa con la propina según el método de pago, y si crees que describe a los pasajeros o al sistema que registra los datos.**
 
-_(tu hallazgo, con el número que lo confirma)_
+Los **888 viajes en efectivo tienen propina 0** (promedio 0.00), mientras que con tarjeta el promedio es **4.73 USD** y ninguno tiene propina 0. Describe al **sistema**, no a los pasajeros: la propina en efectivo se entrega en mano y el taxímetro no la registra. Además hay **60 viajes sin método de pago** (propina promedio 3.35, 16 con propina 0), que parecen una mezcla de ambos. La propina en efectivo es un dato faltante disfrazado de 0.
 
 **Hallazgo 3: la duración tiene una correlación con la tarifa tan alta como la distancia. Si el modelo tiene que estimar la tarifa en el momento en que alguien pide el taxi, ¿puede usar la duración?**
 
-_(tu respuesta)_
+No. La duración (correlación **0.956**) solo se conoce cuando el viaje termina; usarla sería **fuga de información** (data leakage): el modelo se vería excelente en entrenamiento y fallaría en producción. Lo mismo aplica a la propina (0.633). La distancia estimada de la ruta sí se puede calcular al pedir el taxi. Por otro lado, los pasajeros casi no influyen (**−0.051**) y tienen **119 vacíos y 19 en 0**, otro problema de calidad de captura.
 
 ## Ejercicio 3: explora el dataset de tu proyecto
 
