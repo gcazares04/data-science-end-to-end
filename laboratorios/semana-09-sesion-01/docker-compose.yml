@@ -1,0 +1,4 @@
+services:
+  python-app:
+    build: .
+    container_name: semana09
