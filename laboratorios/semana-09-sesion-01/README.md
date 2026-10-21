@@ -70,15 +70,15 @@ Solo o en pareja. Parte de la plantilla [`plantilla-ejercicio2/features_de_zona.
 
 **Respuesta 1:** ¿cuántos viajes tienen `es_tarifa_fija` en 1, y qué tarifa mínima y máxima tienen? ¿Qué te dice eso sobre lo que un modelo lineal puede aprender con esta columna?
 
-_(tu respuesta)_
+**300 viajes**, con tarifa mínima y máxima de **70.0**: todos pagan exactamente lo mismo, sin importar la distancia. Son los 300 viajes de la franja horizontal de la Semana 8. Los otros 73 viajes con JFK, hacia Brooklyn o Queens, no tienen tarifa fija y se cobran por taxímetro. Con esta columna, una regresión lineal aprende un ajuste constante, pero no puede "apagar" la pendiente de la distancia para esos viajes: seguiría sumando tarifa por cada km. Para capturarlo bien necesita una interacción (`distancia_km × (1 − es_tarifa_fija)`) o un modelo de árboles, que separa los viajes de tarifa fija en su propia rama y les asigna 70.
 
 **Respuesta 2:** ¿cuántas columnas crea one-hot para la zona de origen, y cuántas la codificación ordinal? Si el modelo es una regresión lineal, ¿cuál de las dos usarías, y por qué la otra le da información falsa?
 
-_(tu respuesta)_
+One-hot crea **8 columnas**, una por zona (`origen_Brooklyn` … `origen_Upper West Side`). La ordinal crea **1 columna**, con Brooklyn = 0 … Upper West Side = 7. Para una regresión lineal usaría **one-hot**. La ordinal le dice al modelo que las zonas tienen orden y distancia entre sí: que Upper West Side (7) es "más" que Brooklyn (0), y que JFK (2) queda a la mitad de camino entre Harlem (1) y Lower Manhattan (3). Ese orden es alfabético y no tiene ninguna relación con la tarifa, pero el modelo le asignaría una sola pendiente. La ordinal sirve para árboles, que solo cortan por umbrales, o para variables que sí tienen orden.
 
 **Respuesta 3:** ¿qué columnas del dataset no existen al pedir el taxi? ¿Qué pasaría con el modelo si las usaras para entrenar?
 
-_(tu respuesta)_
+No existen **`duracion_min`** (se conoce al terminar el viaje), **`propina`** y **`metodo_pago`** (se registran al pagar), y obviamente **`tarifa`**, que es el objetivo. `metodo_pago` depende del negocio: en una app se elige antes del viaje, pero en un taxi de la calle se sabe al final. `distancia_km` sí existe, como distancia estimada de la ruta. Si entrenaras con las que no existen, tendrías **fuga de información**: el modelo se vería excelente en la evaluación (la duración tiene correlación de 0.956 con la tarifa) y fallaría en producción, porque esas columnas llegarían vacías en el momento de predecir.
 
 ## Ejercicio 3: dos features para tu proyecto
 
