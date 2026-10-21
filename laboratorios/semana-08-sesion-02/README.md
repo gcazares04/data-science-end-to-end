@@ -28,17 +28,17 @@ A partir de la lectura previa:
 
 **Según el artículo, ¿qué preguntas responde la exploración de datos antes de entrenar cualquier modelo?**
 
-_(tu respuesta)_
+Qué datos tengo: cuántas observaciones y features, de qué tipo, cuánto falta y cuántos duplicados hay (paso 1, resumen y estadística descriptiva). Cómo es cada variable y cómo se relacionan entre sí (paso 2). Y si los datos tienen problemas de calidad que romperían el modelo (paso 3): atípicos, desbalance, faltantes, variables casi constantes o duplicados sospechosos. El artículo lo resume en que la exploración guía todo lo que sigue, desde la preparación hasta la interpretación del modelo.
 
 **El artículo distingue la exploración de una sola variable de la exploración de la relación entre dos. ¿Qué herramienta propone para cada una?**
 
-_(tu respuesta)_
+Para **una variable** (univariado), estadísticas descriptivas según el tipo: media, desviación, asimetría, curtosis y cuantiles con **histograma** para las numéricas, y moda y **tabla de frecuencias con gráfico de barras** para las categóricas. Para **la relación entre dos** (multivariado), **diagramas de dispersión** para ver interacciones y **matrices de correlación** (mapa de calor) para medir la fuerza de la relación. El artículo propone `ydata-profiling`, que genera todo eso en un solo reporte.
 
 ## Pregunta de apertura
 
 Entrenas un modelo que predice la tarifa de un viaje en taxi. Sin que lo sepas, 15 de los 3000 viajes tienen una tarifa de 999.99 por un error de captura. ¿Qué le pasa al modelo? ¿Lo notarías mirando solo su resultado final?
 
-_(tu respuesta)_
+La regresión trata de acercarse también a esos 15 viajes: como el error se mide al cuadrado, un error de casi 1000 USD pesa muchísimo, y la recta se inclina hacia ellos. Sube la tarifa predicha para todos y los coeficientes dejan de representar la relación real entre distancia y tarifa. Mirando solo el resultado final (un MAE o un RMSE) probablemente no lo notaría: solo vería un error "algo alto", sin saber por qué. Se descubre mirando los datos antes de entrenar: `describe()` muestra un máximo de 999.99, o un histograma muestra un grupo aislado lejos del resto.
 
 ## Ejercicio 1: resumen, distribución y atípicos
 
@@ -46,15 +46,19 @@ Enunciado: [`starter/viajes_taxi.csv`](./starter/viajes_taxi.csv) tiene 3000 via
 
 **Respuesta 1, antes de ver la solución:** en `describe()`, ¿qué dos valores de la tabla te harían sospechar de un error sin necesidad de graficar nada?
 
-_(tu respuesta)_
+El **máximo de la tarifa, 999.99**, cuando la mediana es 22.60: un viaje en taxi no cuesta eso, y el número redondo parece un código de captura. Y el **mínimo de la duración, −74 minutos**: ningún viaje dura menos que 0. También llaman la atención el mínimo de 0 km en distancia y de 0 pasajeros, pero esos podrían tener otra explicación.
 
 **Respuesta 2:** la regla del IQR marca más de 300 viajes con tarifa atípica. ¿Esperas que todos sean errores? ¿Cómo lo averiguarías?
 
-_(tu respuesta)_
+No. Con límites de −13.85 y 60.40 USD, la regla marca **334 viajes**: 15 son el error de 999.99, pero **302 tienen tarifa de exactamente 70**, y casi todos (320 de los 334 atípicos) salen o llegan a JFK Airport. Eso no es un error: es la tarifa fija del aeropuerto. El resto son viajes largos y caros, pero posibles. Lo averiguaría agrupando los atípicos: contar valores repetidos (`value_counts()` de la tarifa), cruzarlos con la zona de origen y destino, y graficar distancia contra tarifa. Un error de captura se ve como un valor imposible o repetido sin lógica; un caso real tiene una explicación en otra columna.
 
 **La formulación completa, tal como la resuelvo yo:**
 
-_(anota aquí el script y lo que encontró, mientras se revisa en clase)_
+Script de clase: [`starter/EDA.py`](./starter/EDA.py), que corre con `docker compose up --build`.
+
+1. **Resumen:** `info()`, tipos, `isna().sum()`, `duplicated().sum()` y `describe()`. Ahí aparecen la tarifa máxima de 999.99 (15 viajes) y la duración mínima de −74 (10 viajes con duración negativa).
+2. **Distribución:** histograma y boxplot de la tarifa (`hist_tarifa.png`, `boxplot_tarifa.png`). La distribución está sesgada a la derecha: mediana de 22.60 y promedio de 31.39, arrastrado por los atípicos.
+3. **Atípicos con IQR:** límites −13.85 y 60.40, con 334 viajes marcados. La dispersión tarifa contra distancia (`scatter_tarifa.png`) muestra que la mayoría de esos atípicos son la franja de 70 USD de JFK, no errores. Solo los 15 de 999.99 y los 10 de duración negativa son errores confirmados, y son los que se quitan en el Ejercicio 2.
 
 ## Durante el ConcepTest
 
@@ -143,4 +147,4 @@ National Natural Science Foundation of China concentra el **13.7%** de las filas
 
 La tarifa fija de JFK y la hora del día no existen como columnas del dataset de taxis. ¿Cómo le darías esa información a un modelo?
 
-_(tu respuesta)_
+Creándolas como columnas a partir de las que ya existen. Para JFK, una columna binaria `es_tarifa_fija` que vale 1 cuando el viaje va entre JFK y Manhattan, así el modelo puede separar esos viajes en vez de tratarlos como atípicos. Para la hora, extraer la hora de `fecha_hora_inicio` y codificarla como ciclo (seno y coseno), para que las 23:00 queden cerca de las 00:00, o con indicadores como `es_hora_pico` y `es_fin_de_semana`. Las dos se pueden calcular en el momento de pedir el taxi.
