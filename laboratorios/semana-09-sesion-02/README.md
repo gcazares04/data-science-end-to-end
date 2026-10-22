@@ -30,17 +30,17 @@ A partir de la lectura previa:
 
 **Según el artículo, ¿qué es la fuga de información, y por qué un modelo con fuga puede verse excelente en la evaluación y fallar en producción?**
 
-_(tu respuesta)_
+Es cuando información del conjunto de prueba, o información que no existiría al momento de predecir, entra por error en el entrenamiento. El modelo aprende algo que no debería conocer, como estudiar con el examen filtrado: las métricas de evaluación salen irrealmente buenas porque el modelo ya "vio" las respuestas, pero en producción esa información no está y el desempeño cae. El peligro es que da falsa confianza: se toman decisiones con un modelo que parece excelente y no lo es.
 
 **El artículo describe varias formas en que se produce una fuga. ¿Cuál de ellas viste la sesión pasada con la duración del viaje?**
 
-_(tu respuesta)_
+La **fuga del objetivo** (*target leakage*): usar como feature algo que es consecuencia del objetivo o que no existe al momento de predecir. La duración del viaje solo se conoce al terminar, igual que en el ejemplo del artículo de las llamadas a servicio al cliente para predecir la cancelación: los clientes llaman porque ya decidieron cancelar. Las otras dos formas que describe son la **contaminación entre entrenamiento y prueba** y la **fuga durante el preprocesamiento** (escalar, imputar o quitar atípicos con todo el dataset), que es la del Ejercicio 1 de hoy.
 
 ## Pregunta de apertura
 
 Para escalar la distancia, le restas la media y la divides por la desviación estándar. ¿Con qué viajes calculas esa media: con todos, o solo con los de entrenamiento? ¿Cambia algo?
 
-_(tu respuesta)_
+Solo con los de **entrenamiento**. Si la media y la desviación se calculan con todos los viajes, la prueba influye en cómo se transforman los datos de entrenamiento, y la evaluación deja de medir el desempeño sobre datos nunca vistos: es una fuga, aunque sea pequeña. Lo correcto es dividir primero, hacer el `fit` del escalador con entrenamiento y aplicar `transform` con esa misma media y desviación a la prueba y a los viajes nuevos en producción. Con 2975 viajes el número casi no cambia, pero el procedimiento sí, y en producción solo existe lo que se aprendió en entrenamiento.
 
 ## Ejercicio 1: encontrar y corregir la fuga
 
@@ -166,4 +166,4 @@ Entrenamiento: (156, 17) Prueba: (39, 17)
 
 Ya tienes los datos listos para entrenar. Si entrenas dos modelos sobre el mismo conjunto y uno da un error mucho menor en entrenamiento que en prueba, ¿qué le está pasando?
 
-_(tu respuesta)_
+Está **sobreajustando** (*overfitting*): memorizó el ruido y los casos particulares del entrenamiento en vez del patrón general, y por eso no generaliza a datos nuevos. Es típico de modelos muy flexibles, como un árbol de decisión sin límite de profundidad. Se corrige con un modelo más simple, regularización, más datos o, como en la lectura, combinando varios modelos (*ensembles*): el promedio de muchos árboles, como en un *random forest*, reduce la varianza de cada uno.
