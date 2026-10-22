@@ -88,13 +88,36 @@ Usa el mismo archivo de la exploración de la Semana 8 y la plantilla [`plantill
 
 Escribe qué predice tu modelo y en qué momento: qué información existe en ese instante y cuál todavía no.
 
-_(tu respuesta)_
+**Qué predice:** el monto en USD de un award, en `log10(amount_usd)`. Sirve para estimar el monto de los awards que no lo informan, que son el 94.5% de la OBT (hallazgo 2). La etiqueta `label` no sirve como objetivo porque vale 1 en todas las filas (hallazgo 1).
+
+**En qué momento:** cuando el award se registra, es decir, cuando el funder lo otorga y antes de que existan publicaciones financiadas.
+
+- **Existe en ese momento:** funder (`funder_name`, `funder_country_code`), `funding_type`, `funder_scheme`, fechas de inicio y fin (`award_start_date`, `duration_days`), título y descripción, institución líder e `institutions_count`.
+- **Todavía no existe:** todo lo que viene de las publicaciones (`work_*`, `publication_year`, `cited_by_count`, `fwci`, `authors_count`, `is_retracted`) y `funded_outputs_count`, que cuenta publicaciones que salen años después. Usarlas sería fuga, como la duración del taxi.
 
 ### Paso 2: construye las 2 features (15 minutos)
 
 Completa la plantilla con 2 columnas nuevas, derivadas de las existentes. Al menos una tiene que salir de uno de tus hallazgos de la exploración.
 
-_(el código de cada feature)_
+Plantilla: [`plantilla-features/features_proyecto.py`](./plantilla-features/features_proyecto.py). Guarda `obt_features.csv` para el pipeline de la Sesión 2.
+
+```python
+datos = datos[datos["amount_usd"] > 1].copy()          # hallazgo 3: quita el award de 1 USD
+datos["log_amount_usd"] = np.log10(datos["amount_usd"])
+OBJETIVO = "log_amount_usd"
+
+# Feature 1
+datos["duracion_anios"] = datos["duration_days"] / 365.25
+
+# Feature 2
+ESCALA = {
+    "fellowship": "individual", "career_development": "individual", "training": "individual",
+    "cooperative_agreement": "centro", "program": "centro", "contract": "centro",
+}
+datos["escala_financiamiento"] = datos["funding_type"].map(ESCALA).fillna("proyecto")
+```
+
+La evidencia se mide con **un award por fila** (196 awards con monto, de 415 filas), porque la OBT repite el monto por cada publicación financiada.
 
 ### Paso 3: justifica cada feature (5 minutos)
 
@@ -102,11 +125,11 @@ Para cada una: de qué hallazgo o conocimiento del dominio sale, qué evidencia 
 
 **Feature 1:**
 
-_(tu justificación)_
+`duracion_anios` = `duration_days / 365.25`. Sale del dominio: un award que financia más años paga más salarios y más gastos. **Evidencia:** su correlación con `log10(amount_usd)` es **0.30**, la más alta de las columnas numéricas disponibles (`institutions_count` da 0.09). **Disponibilidad:** las fechas de inicio y fin forman parte del award desde que se otorga. Solo 3 de los 196 awards no tienen duración: se imputan con la mediana de entrenamiento. Es numérica: para un modelo lineal se escala; para uno de árboles no hace falta.
 
 **Feature 2:**
 
-_(tu justificación)_
+`escala_financiamiento` agrupa `funding_type` en 3 niveles: **individual** (becas, *career development*, *training*), **centro** (acuerdos cooperativos, programas, contratos) y **proyecto** (el resto: *grant*, *research*). Sale del **hallazgo 3**, la cola larga del monto: los awards grandes no son *grants* raros, sino otro tipo de financiamiento. **Evidencia:** la mediana es de **114 273 USD** en individual, **325 553** en proyecto y **3 064 013** en centro, casi 10 veces más que proyecto. 8 de los 11 awards de centro están en el 10% de montos más altos (≥ 1.36 millones). En cambio, agrupar por funder no sirvió: NSF y NIH tienen la misma mediana (log 5.50). **Disponibilidad:** el tipo de financiamiento se define al otorgar el award. **Codificación:** es categórica; para una regresión lineal uso one-hot, porque individual < proyecto < centro sí tiene orden, pero no distancias iguales (de 114 mil a 325 mil no es lo mismo que de 325 mil a 3 millones). Para árboles basta con la ordinal.
 
 ## Antes de la próxima sesión
 

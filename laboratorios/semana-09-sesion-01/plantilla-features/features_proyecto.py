@@ -1,22 +1,49 @@
+import numpy as np
 import pandas as pd
 
-# TODO: la misma ruta que usaste en la exploracion de la Semana 8.
-datos = pd.read_csv("TODO_ruta_del_archivo.csv")
+datos = pd.read_csv("../../semana-08-sesion-02/plantilla-eda/obt_award_work.csv")
 
-# TODO: la columna que tu modelo va a predecir.
-OBJETIVO = "TODO_columna_objetivo"
+# El modelo estima el monto de un award (para los funders que no lo
+# informan). Por el hallazgo 3 se predice en log10 y se quita el award de
+# 1 USD, que es un error de captura.
+datos = datos[datos["amount_usd"] > 1].copy()
+datos["log_amount_usd"] = np.log10(datos["amount_usd"])
+OBJETIVO = "log_amount_usd"
 
-# TODO, feature 1: crea la columna a partir de una o mas columnas
-# existentes.
-# datos["TODO_feature_1"] = ...
+# Feature 1: duracion del award en anios. Las fechas de inicio y fin se
+# conocen al otorgar el award.
+datos["duracion_anios"] = datos["duration_days"] / 365.25
 
-# TODO, feature 2.
-# datos["TODO_feature_2"] = ...
+# Feature 2: escala del financiamiento segun funding_type. Las becas pagan
+# a una persona; los acuerdos cooperativos, programas y contratos financian
+# centros enteros (la cola larga del hallazgo 3).
+ESCALA = {
+    "fellowship": "individual",
+    "career_development": "individual",
+    "training": "individual",
+    "cooperative_agreement": "centro",
+    "program": "centro",
+    "contract": "centro",
+}
+datos["escala_financiamiento"] = datos["funding_type"].map(ESCALA).fillna("proyecto")
 
-# Evidencia: compara el objetivo segun cada feature nueva.
-# Si es numerica, su correlacion con el objetivo:
-# print(datos[["TODO_feature_1", OBJETIVO]].corr())
-# Si es categorica o binaria, el objetivo promedio por grupo:
-# print(datos.groupby("TODO_feature_2")[OBJETIVO].mean())
+# La OBT tiene una fila por award + publicacion: la evidencia se mide con
+# un award por fila, para no contar el mismo monto varias veces.
+awards = datos.drop_duplicates("award_key")
+print(f"Awards con monto: {len(awards)} (de {len(datos)} filas)")
 
-print(datos.head())
+print("\nCorrelacion de duracion_anios con el objetivo:")
+print(awards[["duracion_anios", OBJETIVO]].corr())
+print(f"Awards sin duracion: {awards['duracion_anios'].isna().sum()}")
+
+print("\nObjetivo por escala_financiamiento:")
+resumen = awards.groupby("escala_financiamiento")[OBJETIVO].agg(["count", "mean", "median"])
+resumen["mediana_usd"] = (10 ** resumen["median"]).round(0)
+print(resumen)
+
+umbral = awards["amount_usd"].quantile(0.9)
+print(f"\nAwards en el 10% mas alto (>= {umbral:,.0f} USD) por escala:")
+print(awards[awards["amount_usd"] >= umbral]["escala_financiamiento"].value_counts())
+
+datos.to_csv("obt_features.csv", index=False)
+print(f"\nobt_features.csv: {datos.shape[0]} filas, {datos.shape[1]} columnas")
