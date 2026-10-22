@@ -22,17 +22,17 @@ A partir de la lectura previa:
 
 **Según el artículo, ¿qué diferencia a una feature que tiene sentido de negocio de una que solo mejora una métrica?**
 
-_(tu respuesta)_
+Una feature con sentido de negocio representa un **comportamiento o un valor que el negocio puede explicar**: el equipo que va a usar el modelo entiende qué mide y por qué influye. Una que solo mejora una métrica sale de combinar columnas a ciegas (sumar o multiplicar todo con todo), y aunque suba el puntaje, nadie puede justificarla ni confiar en ella. El artículo propone 3 formas de crear features explicables: **razones** (proporciones), **tendencias** (cambio en el tiempo) y **granularidad** (medir lo mismo con más o menos detalle).
 
 **Elige uno de los ejemplos del artículo: ¿qué conocimiento del negocio traduce a una columna, y cómo?**
 
-_(tu respuesta)_
+Las **transacciones en línea como proporción**. El conocimiento del negocio es que el compromiso digital de un cliente depende de qué parte de su actividad hace en línea, no del número absoluto. Dos clientes con 5 transacciones en línea en 3 años parecen iguales, pero si uno hizo 100 transacciones en total (5%) y el otro solo 5 (100%), el segundo es un cliente exclusivamente digital. La columna se calcula como `transacciones_en_linea / transacciones_totales`.
 
 ## Pregunta de apertura
 
 La exploración encontró dos patrones que no existen como columnas: la tarifa fija entre JFK y Manhattan, y viajes que cuestan más por kilómetro a ciertas horas. El modelo solo ve columnas. ¿Cómo le das esa información?
 
-_(tu respuesta)_
+Creando columnas que codifiquen ese conocimiento, porque el modelo solo aprende de lo que ve. Para la tarifa fija: `es_tarifa_fija`, que vale 1 si el viaje va entre JFK y una zona de Manhattan. Para el costo por hora: extraer la hora de `fecha_hora_inicio` y construir `es_hora_pico` (7 a 9 y 16 a 19, entre semana), `es_fin_de_semana` y la hora como ciclo (`hora_sin`, `hora_cos`). Todas salen de columnas que existen al pedir el taxi.
 
 ## Ejercicio 1: features de fecha y hora
 
@@ -40,15 +40,28 @@ Enunciado: [`starter/viajes_taxi.csv`](./starter/viajes_taxi.csv), el mismo data
 
 **Respuesta 1, antes de ver la solución:** si dejas la hora como un número del 0 al 23, ¿qué tan lejos queda la hora 23 de la hora 0 para un modelo que mide distancias entre números? ¿Y en el reloj?
 
-_(tu respuesta)_
+Como números, la hora 23 queda a **23 unidades** de la hora 0, la mayor distancia posible. En el reloj están a **1 hora**: las 23:00 y las 00:00 son vecinas, y las 23:00 se parecen más a la medianoche que a las 12:00. Por eso se codifica como ciclo con seno y coseno: así la 23 y la 0 quedan juntas en el círculo.
 
 **Respuesta 2:** la duración del viaje no existe al pedir el taxi, pero la hora sí. ¿Qué parte de lo que la duración le diría al modelo puede traer `es_hora_pico`?
 
-_(tu respuesta)_
+La parte del **tráfico**. La duración le dice al modelo que un viaje fue lento, y en hora pico los viajes son más lentos por la misma distancia. Sin contar JFK, la mediana es de **3.64 minutos por km en hora pico** contra **2.81** fuera de ella, y la tarifa por km pasa de **3.23 a 3.53 USD**. `es_hora_pico` trae ese efecto promedio, que sí se conoce al pedir el taxi. Lo que no trae es la variación de un viaje concreto: un accidente o un desvío solo se ven en la duración real.
 
 **La formulación completa, tal como la resuelvo yo:**
 
-_(anota aquí el script y lo que mostró, mientras se revisa en clase)_
+Script de clase: [`starter/mi_primer_feature_eng.py`](./starter/mi_primer_feature_eng.py), que corre con `docker compose up --build` desde esta carpeta.
+
+1. Limpia los errores confirmados con `query('tarifa < 999 and duracion_min > 0')`.
+2. Desde `fecha_hora_inicio` saca `hora` y `dia_semana`, y codifica la hora como ciclo con `hora_sin = sin(2π·hora/24)` y `hora_cos = cos(2π·hora/24)`.
+3. Codifica `zona_origen` y `zona_destino` con one-hot (`pd.get_dummies`) y `metodo_pago` con `OrdinalEncoder`.
+
+Comprobación de la hora pico (7 a 9 y 16 a 19, de lunes a viernes; fin de semana es sábado y domingo), sin los viajes de JFK para que la tarifa fija no se mezcle:
+
+| | Viajes | Tarifa mediana | USD por km | Min por km |
+|---|---|---|---|---|
+| Fuera de hora pico | 1812 | 18.41 | 3.23 | 2.81 |
+| Hora pico | 790 | 21.51 | 3.53 | 3.64 |
+
+La hora pico sí aporta: por la misma distancia se cobra cerca de 9% más, porque el taxímetro también cobra el tiempo detenido. Su correlación con la tarifa es baja (0.12), porque la distancia explica casi todo; la hora pico es un ajuste encima de la distancia.
 
 ## Durante el ConcepTest
 
@@ -137,4 +150,4 @@ Para cada una: de qué hallazgo o conocimiento del dominio sale, qué evidencia 
 
 Para escalar la distancia antes de entrenar, le restas la media y la divides por la desviación estándar. ¿Con qué viajes calculas esa media: con todos, o solo con los de entrenamiento? ¿Cambia algo?
 
-_(tu respuesta)_
+Solo con los de **entrenamiento**. Si la media y la desviación se calculan con todos los viajes, la prueba influye en cómo se transforman los datos de entrenamiento, y la evaluación deja de medir el desempeño sobre datos nunca vistos: es una fuga, aunque sea pequeña. Lo correcto es dividir primero, hacer el `fit` del escalador con entrenamiento y aplicar `transform` con esa misma media y desviación a la prueba y a los viajes nuevos en producción. Con 2975 viajes el número casi no cambia, pero el procedimiento sí, y en producción solo existe lo que se aprendió en entrenamiento.
