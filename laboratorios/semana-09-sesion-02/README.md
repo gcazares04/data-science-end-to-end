@@ -99,15 +99,15 @@ Solo o en pareja. Parte de la plantilla [`plantilla-ejercicio2/pipeline_completo
 
 **Respuesta 1:** ¿cuántas columnas quedan después de preparar los datos? Explica de dónde sale ese número a partir de los tres grupos de columnas.
 
-_(tu respuesta)_
+Quedan **25 columnas** (entrenamiento 2380 × 25 y prueba 595 × 25). Salen de **2 numéricas** (`distancia_km`, `pasajeros`, imputadas y escaladas, siguen siendo 2), **18 one-hot** (8 zonas de origen + 8 zonas de destino + 2 métodos de pago: efectivo y tarjeta; los 60 vacíos se imputan con el más frecuente antes de codificar, así que no crean una columna propia) y **5 ya listas** que pasan sin cambios. Total: 2 + 18 + 5 = 25. Prueba tiene las mismas 25 porque usa las categorías aprendidas en entrenamiento.
 
 **Respuesta 2:** ¿las medianas que aprendió el imputador coinciden con las de entrenamiento o con las de todo el dataset? ¿Qué demuestra eso?
 
-_(tu respuesta)_
+Coinciden con las de **entrenamiento**: el imputador aprendió 6.94 km y 1 pasajero, igual que la mediana de `X_ent`. La mediana de todo el dataset es 6.93 km. Demuestra que `fit_transform(X_ent)` solo vio entrenamiento y que `transform(X_prueba)` aplica esos valores sin recalcularlos: la prueba no influye en la preparación. Es la fuga del Ejercicio 1, corregida sin tener que acordarse del orden.
 
 **Respuesta 3:** ¿qué le pasa al viaje desde el Bronx? ¿Qué habría pasado con `pd.get_dummies` aplicado por separado a ese viaje?
 
-_(tu respuesta)_
+**Ninguna** de las 8 columnas de `zona_origen` queda en 1 (0 de 8): con `handle_unknown="ignore"`, una categoría que no vio en entrenamiento se codifica como un vector de ceros, y el viaje se transforma igual en 25 columnas. El destino sí se marca (`zona_destino_Midtown` = 1). Con `pd.get_dummies` aplicado solo a ese viaje, saldrían **3 columnas** (`zona_origen_Bronx`, `zona_destino_Midtown`, `metodo_pago_tarjeta`) en vez de 25: otros nombres, otra cantidad y otro orden. El modelo fallaría por la forma, o peor, leería columnas equivocadas si se alinean por posición. El `OneHotEncoder` guarda las categorías de entrenamiento; `get_dummies` las recalcula con lo que recibe.
 
 ## Ejercicio 3: el pipeline de tu proyecto
 
