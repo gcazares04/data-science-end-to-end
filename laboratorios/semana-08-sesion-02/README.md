@@ -102,28 +102,26 @@ Reemplaza la ruta del archivo y el nombre de la columna que tu modelo va a prede
 
 **Proyecto:** GrantMatch (PSet 2), un recomendador que empareja convocatorias de financiamiento (awards) con el perfil de investigadores (sus publicaciones). El archivo listo para modelar es la One Big Table `OBT.OBT_AWARD_WORK`, con una fila por par award + publicación financiada.
 
-> **Nota sobre los datos:** los trials de Snowflake del equipo expiraron, así que no se pudo exportar la OBT. La reconstruí con [`plantilla-eda/reconstruir_obt.py`](./plantilla-eda/reconstruir_obt.py) desde la API pública de OpenAlex, que es la misma fuente que el bucket de S3 que carga Kestra. Apliqué las mismas reglas de limpieza de dbt Silver (`amount <= 0` pasa a NULL, `end_date < start_date` pasa a NULL y `amount_usd` solo se llena cuando la moneda es USD) y respeté el grain de `FACT_AWARD_WORKS`. Es una muestra aleatoria de 4000 awards (semilla 42), con hasta 3 publicaciones por award. [`plantilla-eda/exportar_obt.py`](./plantilla-eda/exportar_obt.py) exporta la OBT real cuando haya una cuenta activa.
+> **Nota sobre los datos:** volví a correr el pipeline completo (Kestra → Bronze → dbt Silver/Gold → Spark) en una cuenta nueva de Snowflake, con el snapshot de OpenAlex del 2026-10-14. La OBT completa tiene 261 633 filas y 203 173 awards (~155 MB), así que [`plantilla-eda/exportar_obt.py`](./plantilla-eda/exportar_obt.py) guarda una muestra aleatoria de **4000 awards** (semilla 42) con todas sus filas, y quita las columnas de texto largo y las listas de autores.
 
 **Objetivo:** la etiqueta real del modelo es `label`, pero vale 1 en todas las filas (ver hallazgo 1), así que no tiene distribución que explorar. Uso **`amount_usd`** (monto del award en USD) como objetivo numérico.
 
-- **7564 filas y 41 columnas.**
-- **Faltantes:** `amount_usd` 94.5%, `award_topic_name`/`field`/`domain` 95.8%, `lead_institution_*` 84%, `amount` 82.9%, `duration_days` 81.6%, `award_title` 79.8%, `currency` 80.3%, `fwci` 3.4%, `funder_country_code` 2.8% y `work_doi` 1.9%. Las columnas de la publicación están casi completas.
-- **IQR:** marca **41 atípicos** de 416 montos informados. Son awards grandes de NIH, NSF, Gates y USAspending, no errores. El único error claro es un award de NSF con `amount_usd = 1.0`.
+- **5123 filas y 56 columnas** (4000 awards; uno de ellos tiene 107 publicaciones).
+- **Faltantes:** `is_global_south` 100%, `award_subfield`/`field`/`domain_name` 97.2%, `amount_usd` 95.9%, `lead_institution_*` 87.4%, `funder_scheme` 84.9%, `duration_days` 84.8%, `amount` 84%, `award_start_date` y `currency` 83.4%, `award_title` y `funding_type` 83%, `first_author_*` 7.7%, `funder_country_code` 6.3% y `fwci` 5.5%. Las columnas de la publicación están casi completas.
+- **IQR:** marca **42 atípicos** de 210 montos informados, todos de 10 millones o más. Son awards grandes de NSF (32), USAID (5) y DOE/Office of Science (4), no errores: el máximo, 211 millones, es un centro de bioenergía de Office of Science.
 
 ### Paso 2: relaciones (10 minutos)
 
 Completa los pasos 4 y 5: la relación entre tu objetivo y la variable que esperas que más influya, y las consultas que confirman lo que encuentres.
 
-Agrupé `amount_usd` por `funder_name` (`figuras/monto_por_funder.png`), con mediana porque el promedio lo arrastran los atípicos. Solo 4 funders tienen al menos 10 montos, y los 4 son de EE. UU.:
+Agrupé `amount_usd` por `funder_name` (`figuras/monto_por_funder.png`), con mediana porque el promedio lo arrastran los atípicos. Solo 2 funders tienen al menos 10 montos, y los 2 son de EE. UU.:
 
 | Funder | Montos | Mediana | Promedio |
 |---|---|---|---|
-| U.S. Department of Energy | 10 | 223 000 | 4 798 392 |
-| NASA | 11 | 287 171 | 291 912 |
-| NIH | 153 | 308 855 | 705 644 |
-| NSF | 222 | 358 915 | 504 347 |
+| NIH | 29 | 420 000 | 798 220 |
+| NSF | 145 | 500 000 | 5 854 202 |
 
-Las medianas son parecidas: entre 220 y 360 mil USD. La diferencia grande está en los promedios, porque DOE tiene un award que dispara el suyo. Las consultas del paso 5 muestran que **el monto existe o no según el origen del dato (`provenance`)**, no según el award: los 416 montos son de funders de EE. UU. (`funder_country_code = US`).
+Las medianas son parecidas (420 y 500 mil USD). La diferencia grande está en los promedios: el de NSF es 12 veces su mediana porque incluye centros y programas de decenas de millones. Las consultas del paso 5 muestran que **el monto existe o no según el funder**, no según el award: los 210 montos son de funders de EE. UU. (`funder_country_code = US`).
 
 ### Paso 3: tres hallazgos que afectarían el modelado (10 minutos)
 
@@ -131,15 +129,15 @@ Para cada hallazgo, escribe qué encontraste, el número o el gráfico que lo co
 
 **Hallazgo 1: la OBT no tiene ejemplos negativos.**
 
-`label` vale 1 en las **7564 filas** (`Filas con label distinto de 1: 0`). La OBT solo guarda financiamientos observados, así que un clasificador entrenado tal cual aprendería a decir siempre "sí". **Qué cambia:** antes de entrenar hay que generar negativos, por ejemplo emparejando cada publicación con awards del mismo campo que no la financiaron (*negative sampling*), y validar con métricas de ranking (precision@k) en vez de accuracy.
+`label` vale 1 en las **5123 filas** (`Filas con label distinto de 1: 0`), igual que en la OBT completa. La OBT solo guarda financiamientos observados, así que un clasificador entrenado tal cual aprendería a decir siempre "sí". **Qué cambia:** antes de entrenar hay que generar negativos, por ejemplo emparejando cada publicación con awards del mismo campo que no la financiaron (*negative sampling*), y validar con métricas de ranking (precision@k) en vez de accuracy.
 
-**Hallazgo 2: el monto y el texto del award faltan según el origen del dato, no al azar.**
+**Hallazgo 2: el monto y el texto del award faltan según el funder, no al azar.**
 
-El **79.8%** de las filas no tiene ni título ni descripción del award. Por `provenance`, `crossref_work_funders` (4964 filas, 66% del total) y `europepmc_work_funders` (878) tienen **0%** de monto, título y descripción: son awards que solo se conocen por el agradecimiento de un paper. En cambio, `nsf_award_search` tiene **100%** de monto y título. `amount_usd` solo existe para funders de EE. UU. (416 de 416). **Qué cambia:** `award_text`, el texto que la siguiente etapa vectoriza con Cortex, está vacío para 4 de cada 5 awards. Para esos hay que construir el embedding con otra información (nombre del funder, `funder_award_id` o el texto de las publicaciones que ya financió), o excluirlos del recomendador. `amount_usd` no se puede usar como variable de entrada general ni imputar con la media, porque es MNAR, como ya decía `slv_awards_history`.
+El **83%** de las filas no tiene ni título ni descripción del award. Por funder, NSFC (712 filas), el National Cancer Institute (124) y el Army Research Office (107) tienen **0%** de monto y descripción: son awards que solo se conocen por el agradecimiento de un paper. En cambio, NSF tiene **86%** de monto, título y descripción, y la JSPS tiene 87% de título pero ningún monto en USD. `amount_usd` solo existe para funders de EE. UU. (210 de 210). **Qué cambia:** `award_text`, el texto que la siguiente etapa vectoriza con Cortex, está vacío para más de 4 de cada 5 awards. Para esos hay que construir el embedding con otra información (nombre del funder, `funder_award_id` o el texto de las publicaciones que ya financió), o excluirlos del recomendador. `amount_usd` no se puede usar como variable de entrada general ni imputar con la media, porque es MNAR, como ya decía `slv_awards_history`. `is_global_south` está 100% vacía, así que hay que revisar su seed en dbt antes de usarla.
 
 **Hallazgo 3: pocos funders dominan y el monto tiene una cola muy larga.**
 
-National Natural Science Foundation of China concentra el **13.7%** de las filas, y los 5 primeros funders suman el **27.9%**. `amount_usd` tiene promedio de **1 547 878** contra mediana de **325 553** y asimetría de **10.9**, con máximo de 119 millones. En log10 la asimetría baja a **−1.42**, y esa cola izquierda la genera un solo award de NSF con monto de **1 USD**, que es un error de captura. **Qué cambia:** quitar el award de 1 USD (y fijar un mínimo de monto en Silver), usar `log10(amount_usd)` si el monto entra al modelo, y estratificar por funder al partir train/test para que el modelo no aprenda solo a recomendar NSFC. Fuera del objetivo hay otras filas que quitar: **8 publicaciones retractadas** y **1 publicación de 1905**, anterior al rango de `dim_date`. Además, el **26.3%** de las publicaciones no tiene abstract, así que su `work_text` es solo el título.
+National Natural Science Foundation of China concentra el **13.9%** de las filas, y los 5 primeros funders suman el **29.1%**. `amount_usd` tiene promedio de **9 817 123** contra mediana de **561 386** y asimetría de **4.8**, con mínimo de 5 400 y máximo de 211 millones. En log10 la asimetría baja a **0.7**; en la OBT real no aparece el award de 1 USD de la reconstrucción, así que no hay montos menores a 1000. **Qué cambia:** usar `log10(amount_usd)` si el monto entra al modelo y estratificar por funder al partir train/test para que el modelo no aprenda solo a recomendar NSFC. Fuera del objetivo hay otras filas que revisar: **3 publicaciones retractadas** que habría que quitar. Además, el **18.5%** de las publicaciones no tiene abstract, así que su `work_text` es solo el título.
 
 ## Antes de la próxima sesión
 

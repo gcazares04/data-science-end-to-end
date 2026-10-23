@@ -6,8 +6,8 @@ import pandas as pd
 
 os.makedirs("figuras", exist_ok=True)
 
-# OBT de GrantMatch (PSet 2) reconstruida desde OpenAlex con
-# reconstruir_obt.py, porque los trials de Snowflake expiraron.
+# OBT de GrantMatch (PSet 2) exportada de Snowflake con exportar_obt.py
+# (muestra de 4000 awards con todas sus filas).
 datos = pd.read_csv("obt_award_work.csv")
 
 # La etiqueta real del recomendador es label, pero vale 1 en todas las filas
@@ -66,8 +66,8 @@ plt.close()
 # Hallazgo 1: label no tiene negativos.
 print("Filas con label distinto de 1:", (datos["label"] != 1).sum())
 
-# Hallazgo 2: el monto y los textos del award faltan segun el origen del dato.
-por_origen = datos.groupby("provenance").agg(
+# Hallazgo 2: el monto y los textos del award faltan segun el funder.
+por_origen = datos.groupby("funder_name").agg(
     filas=("award_key", "size"),
     con_monto_usd=(OBJETIVO, lambda m: m.notna().mean()),
     con_titulo=("award_title", lambda t: t.notna().mean()),
