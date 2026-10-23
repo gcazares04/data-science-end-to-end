@@ -4,8 +4,8 @@ import pandas as pd
 datos = pd.read_csv("../../semana-08-sesion-02/plantilla-eda/obt_award_work.csv")
 
 # El modelo estima el monto de un award (para los funders que no lo
-# informan). Por el hallazgo 3 se predice en log10 y se quita el award de
-# 1 USD, que es un error de captura.
+# informan). Por el hallazgo 3 se predice en log10. Se descartan montos de
+# 1 USD o menos por ser errores de captura (en la OBT real no hay).
 datos = datos[datos["amount_usd"] > 1].copy()
 datos["log_amount_usd"] = np.log10(datos["amount_usd"])
 OBJETIVO = "log_amount_usd"
