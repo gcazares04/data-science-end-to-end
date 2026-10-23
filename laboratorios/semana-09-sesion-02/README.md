@@ -117,20 +117,20 @@ Usa tu archivo con las 2 features de la sesión pasada y la plantilla [`plantill
 
 Escribe qué columnas son numéricas, cuáles categóricas y cuáles ya están listas, y cuál es el objetivo. Deja fuera toda columna que no exista al momento de predecir.
 
-Archivo: `obt_features.csv` de la Sesión 1, reducido a **una fila por award** (195 awards con monto y fecha de inicio). La OBT repite el award por cada publicación financiada, y el modelo predice el monto de un award, no de un par award + publicación.
+Archivo: `obt_features.csv` de la Sesión 1, reducido a **una fila por award** (169 awards con monto y fecha de inicio). La OBT repite el award por cada publicación financiada, y el modelo predice el monto de un award, no de un par award + publicación.
 
-- **Objetivo:** `log_amount_usd` (`log10(amount_usd)`, sin el award de 1 USD).
-- **Numéricas:** `duracion_anios` (feature 1; 2 faltantes en entrenamiento, se imputan con la mediana) e `institutions_count`.
+- **Objetivo:** `log_amount_usd` (`log10(amount_usd)`, sin montos de 1 USD o menos).
+- **Numéricas:** `duracion_anios` (feature 1; 4 faltantes en entrenamiento y 1 en prueba, se imputan con la mediana de entrenamiento) e `institutions_count`.
 - **Categóricas:** `escala_financiamiento` (feature 2) y `funder_name`.
 - **Ya listas:** `has_description`, convertida de booleano a 0/1.
 - **Fuera, porque no existen al otorgar el award:** `cited_by_count`, `fwci`, `funded_outputs_count`, `authors_count`, `is_retracted`, `publication_year` y el resto de columnas `work_*`.
-- **Fuera por otros motivos:** `amount`, `amount_usd` y `currency`, que son el objetivo con otro nombre, y por lo tanto fuga directa. `label` vale 1 en todas las filas. `funder_country_code` es US en todas. Los IDs (`award_key`, `work_key`, `funder_award_id`) son identificadores. `award_title` es texto libre. `award_topic_*` falta en el 95.8%. `duration_days` ya está dentro de `duracion_anios`.
+- **Fuera por otros motivos:** `amount`, `amount_usd` y `currency`, que son el objetivo con otro nombre, y por lo tanto fuga directa. `label` vale 1 en todas las filas. `funder_country_code` es US en todas. Los IDs (`award_key`, `work_key`, `funder_award_id`) son identificadores. `award_title` es texto libre. `award_topic_*` falta en el 97.2%. `duration_days` ya está dentro de `duracion_anios`.
 
 ### Paso 2: decide cómo dividir (5 minutos)
 
 ¿Tu modelo predice el futuro a partir de filas con fecha? Si sí, divide por fecha; si no, al azar. Justifica.
 
-**Por fecha.** El modelo estima el monto de awards que se otorgan después de los que ya conoce, y los montos cambian con el tiempo (inflación, presupuestos de cada funder). Una división al azar mezclaría awards de 2024 en entrenamiento para predecir awards de 2010 y daría una evaluación optimista. Uso un corte en **2020-01-01**: entrenamiento con los awards que empiezan de 1971 a 2019 (156) y prueba con los de 2020 a 2025 (39), que son cerca del 20% más reciente. No estratifico por funder, como proponía en la Semana 8, porque eso exige dividir al azar. El costo de dividir por fecha se ve en prueba: la Bill and Melinda Gates Foundation solo aparece después de 2020.
+**Por fecha.** El modelo estima el monto de awards que se otorgan después de los que ya conoce, y los montos cambian con el tiempo (inflación, presupuestos de cada funder). Una división al azar mezclaría awards de 2024 en entrenamiento para predecir awards de 2010 y daría una evaluación optimista. Uso un corte en **2020-01-01**: entrenamiento con los awards que empiezan de 1988 a 2019 (123) y prueba con los de 2020 a 2025 (46), que son cerca del 27% más reciente. No estratifico por funder, como proponía en la Semana 8, porque eso exige dividir al azar. El costo de dividir por fecha se ve en prueba: NSF pone 34 de los 46 awards, así que la evaluación mide sobre todo qué tan bien predice NSF.
 
 ### Paso 3: construye y corre el pipeline (15 minutos)
 
@@ -139,26 +139,30 @@ Completa la plantilla y córrela. Anota la forma de los conjuntos de entrenamien
 Plantilla: [`plantilla-pipeline/pipeline_proyecto.py`](./plantilla-pipeline/pipeline_proyecto.py).
 
 ```
-Corte: 2020-01-01. Entrenamiento: 1971-07-01 a 2019-09-30; prueba: 2020-01-01 a 2025-09-01
-Entrenamiento: (156, 17) Prueba: (39, 17)
+Corte: 2020-01-01. Entrenamiento: 1988-08-15 a 2019-10-01; prueba: 2020-01-01 a 2025-08-01
+Entrenamiento: (123, 21) Prueba: (46, 21)
 ['numericas__duracion_anios', 'numericas__institutions_count',
  'categoricas__escala_financiamiento_centro', 'categoricas__escala_financiamiento_individual',
  'categoricas__escala_financiamiento_proyecto',
+ 'categoricas__funder_name_Agency for Healthcare Research and Quality',
  'categoricas__funder_name_American Heart Association',
- 'categoricas__funder_name_Centers for Disease Control and Prevention',
- 'categoricas__funder_name_Congressionally Directed Medical Research Programs',
- 'categoricas__funder_name_James S. McDonnell Foundation',
+ 'categoricas__funder_name_Bill and Melinda Gates Foundation',
+ 'categoricas__funder_name_Cancer Prevention and Research Institute of Texas',
+ 'categoricas__funder_name_Gordon and Betty Moore Foundation',
+ 'categoricas__funder_name_Institute of Education Sciences',
+ 'categoricas__funder_name_John Templeton Foundation',
  'categoricas__funder_name_National Aeronautics and Space Administration',
- 'categoricas__funder_name_National Endowment for the Humanities',
+ 'categoricas__funder_name_National Institute of Justice',
  'categoricas__funder_name_National Institutes of Health',
  'categoricas__funder_name_National Science Foundation',
+ 'categoricas__funder_name_Office of Science',
  'categoricas__funder_name_U.S. Department of Defense',
  'categoricas__funder_name_U.S. Department of Energy',
  'categoricas__funder_name_United States Agency for International Development',
  'ya_listas__has_description']
 ```
 
-**17 columnas** = 2 numéricas + 3 de escala + 11 funders + 1 ya lista. El único award de prueba de la Gates Foundation, un funder que entrenamiento no vio, queda con las 11 columnas de funder en 0, igual que el viaje desde el Bronx. Es poco para entrenar: 156 awards con 17 columnas. Hace falta un modelo simple y regularizado, y es otro efecto del hallazgo 2, porque solo los funders de EE. UU. informan el monto.
+**21 columnas** = 2 numéricas + 3 de escala + 15 funders + 1 ya lista. En esta muestra todos los funders de prueba aparecen en entrenamiento, pero si llega uno nuevo, `handle_unknown="ignore"` lo deja con las 15 columnas de funder en 0, igual que el viaje desde el Bronx. 9 de los 15 funders tienen un solo award en entrenamiento, así que su columna casi no aporta. Es poco para entrenar: 123 awards con 21 columnas. Hace falta un modelo simple y regularizado, y es otro efecto del hallazgo 2, porque solo los funders de EE. UU. informan el monto.
 
 ## Antes de la próxima sesión
 
