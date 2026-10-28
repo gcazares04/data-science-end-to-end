@@ -49,24 +49,18 @@ Como números, la hora 23 queda a **23 unidades** de la hora 0, la mayor distanc
 
 **Respuesta 2 (TODO 3):** sin el TODO 3, el Paso 4 muestra un solo grupo. Con la hora pico construida, ¿esperas que la tarifa por kilómetro sea más alta o más baja en hora pico? ¿Por qué, si la tarifa depende de la distancia y de la duración?
 
-La parte del **tráfico**. La duración le dice al modelo que un viaje fue lento, y en hora pico los viajes son más lentos por la misma distancia. Sin contar JFK, la mediana es de **3.64 minutos por km en hora pico** contra **2.81** fuera de ella, y la tarifa por km pasa de **3.23 a 3.53 USD**. `es_hora_pico` trae ese efecto promedio, que sí se conoce al pedir el taxi. Lo que no trae es la variación de un viaje concreto: un accidente o un desvío solo se ven en la duración real.
-
-**Respuesta 3:** la duración del viaje no existe al pedir el taxi, pero la hora sí. ¿Qué parte de lo que la duración le diría al modelo puede traer `es_hora_pico`?
-
-Script de clase: [`starter/mi_primer_feature_eng.py`](./starter/mi_primer_feature_eng.py), que corre con `docker compose up --build` desde esta carpeta.
-
-1. Limpia los errores confirmados con `query('tarifa < 999 and duracion_min > 0')`.
-2. Desde `fecha_hora_inicio` saca `hora` y `dia_semana`, y codifica la hora como ciclo con `hora_sin = sin(2π·hora/24)` y `hora_cos = cos(2π·hora/24)`.
-3. Codifica `zona_origen` y `zona_destino` con one-hot (`pd.get_dummies`) y `metodo_pago` con `OrdinalEncoder`.
-
-Comprobación de la hora pico (7 a 9 y 16 a 19, de lunes a viernes; fin de semana es sábado y domingo), sin los viajes de JFK para que la tarifa fija no se mezcle:
+**Más alta**, porque el taxímetro cobra la distancia y también el tiempo detenido en el tráfico. La salida del Paso 4 lo confirma. Hora pico es de 7 a 9 y de 16 a 19, de lunes a viernes. Se excluyen los viajes de tarifa fija de 70 USD para que no se mezclen:
 
 | | Viajes | Tarifa mediana | USD por km | Min por km |
 |---|---|---|---|---|
-| Fuera de hora pico | 1812 | 18.41 | 3.23 | 2.81 |
-| Hora pico | 790 | 21.51 | 3.53 | 3.64 |
+| Fuera de hora pico | 1842 | 18.69 | 3.22 | 2.79 |
+| Hora pico | 812 | 22.14 | 3.52 | 3.64 |
 
-La hora pico sí aporta: por la misma distancia se cobra cerca de 9% más, porque el taxímetro también cobra el tiempo detenido. Su correlación con la tarifa es baja (0.12), porque la distancia explica casi todo; la hora pico es un ajuste encima de la distancia.
+Por la misma distancia se cobra cerca de 9% más. La correlación de `es_hora_pico` con la tarifa es baja (0.11), porque la distancia explica casi todo; la hora pico es un ajuste encima de la distancia.
+
+**Respuesta 3:** la duración del viaje no existe al pedir el taxi, pero la hora sí. ¿Qué parte de lo que la duración le diría al modelo puede traer `es_hora_pico`?
+
+La parte del **tráfico**. La duración le dice al modelo que un viaje fue lento, y en hora pico los viajes son más lentos por la misma distancia: **3.64 minutos por km en hora pico** contra **2.79** fuera de ella. `es_hora_pico` trae ese efecto promedio, que sí se conoce al pedir el taxi. Lo que no trae es la variación de un viaje concreto: un accidente o un desvío solo se ven en la duración real.
 
 ## Durante el ConcepTest
 

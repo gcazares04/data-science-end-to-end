@@ -43,7 +43,7 @@ X_ent, X_prueba, y_ent, y_prueba = train_test_split(X, y, test_size=0.2, random_
 # la regresion lineal.
 pipeline = Pipeline([
     ("imputar", SimpleImputer(strategy="median")),
-    ("escalador", StandardScaler()),
+    ("escalar", StandardScaler()),
     ("modelo", LinearRegression()),
 ])
 

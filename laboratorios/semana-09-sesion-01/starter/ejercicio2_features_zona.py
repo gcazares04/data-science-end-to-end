@@ -19,19 +19,42 @@ ZONAS_MANHATTAN = ["Midtown", "Upper East Side", "Upper West Side", "Lower Manha
 # va de JFK Airport a una zona de Manhattan, o de una zona de Manhattan a
 # JFK Airport. Imprime cuantos viajes la tienen en 1, y la tarifa minima
 # y maxima de esos viajes.
+desde_jfk = (viajes["zona_origen"] == "JFK Airport") & viajes["zona_destino"].isin(ZONAS_MANHATTAN)
+hacia_jfk = viajes["zona_origen"].isin(ZONAS_MANHATTAN) & (viajes["zona_destino"] == "JFK Airport")
+viajes["es_tarifa_fija"] = (desde_jfk | hacia_jfk).astype(int)
+fijos = viajes[viajes["es_tarifa_fija"] == 1]
+print(f"Viajes con es_tarifa_fija = 1: {len(fijos)}")
+print(f"Tarifa minima: {fijos['tarifa'].min()}, maxima: {fijos['tarifa'].max()}")
 
 # TODO 2: codificado, el resultado de codificar zona_origen con one-hot
 # (pd.get_dummies), con el prefijo "origen" y dtype=int. Imprime los
 # nombres de las columnas nuevas.
-codificado = None
+codificado = pd.get_dummies(viajes["zona_origen"], prefix="origen", dtype=int)
+print(f"Columnas one-hot ({len(codificado.columns)}):", list(codificado.columns))
 
 # TODO 3: codifica zona_origen de forma ordinal: un numero entero por
 # zona, en orden alfabetico, en una columna origen_ordinal.
+zonas = sorted(viajes["zona_origen"].unique())
+viajes["origen_ordinal"] = viajes["zona_origen"].map({zona: i for i, zona in enumerate(zonas)})
+print("Codificacion ordinal (1 columna):", {zona: i for i, zona in enumerate(zonas)})
 
 # TODO 4: disponible_al_pedir, un diccionario con cada columna original
 # del dataset y True o False segun exista en el momento en que alguien
 # pide el taxi (antes del viaje). Imprime la decision de cada una.
-disponible_al_pedir = None
+disponible_al_pedir = {
+    "id_viaje": True,  # existe, pero es un identificador: no es feature
+    "fecha_hora_inicio": True,
+    "zona_origen": True,
+    "zona_destino": True,
+    "distancia_km": True,  # estimada por la ruta; la real se mide al final
+    "duracion_min": False,  # se conoce al terminar el viaje
+    "pasajeros": True,
+    "metodo_pago": False,  # se registra al pagar
+    "tarifa": False,  # es el objetivo
+    "propina": False,  # se registra al pagar
+}
+for columna, disponible in disponible_al_pedir.items():
+    print(f"{columna}: {'si' if disponible else 'no'}")
 
 
 def comprobar(numero, condicion):
