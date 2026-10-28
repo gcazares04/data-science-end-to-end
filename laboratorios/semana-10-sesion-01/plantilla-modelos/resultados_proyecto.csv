@@ -1,0 +1,10 @@
+modelo,mae_log_entrenamiento,mae_log_prueba,brecha,factor_prueba,segundos
+linea base (mediana),0.5158,0.369,-0.1468,2.34,0.004
+regla: mediana por funder,0.3821,0.4975,0.1154,3.14,0.0
+lineal,0.3206,0.3967,0.0762,2.49,0.004
+ridge alpha=1,0.3431,0.3832,0.0401,2.42,0.003
+ridge alpha=10,0.3936,0.3608,-0.0328,2.3,0.002
+bosque aleatorio,0.1786,0.4233,0.2447,2.65,0.065
+bosque min_samples_leaf=5,0.3629,0.3899,0.027,2.45,0.057
+gradient boosting,0.1749,0.4101,0.2353,2.57,0.015
+gradient boosting regularizado,0.281,0.3742,0.0932,2.37,0.013

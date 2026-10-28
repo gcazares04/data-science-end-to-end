@@ -71,7 +71,7 @@ def evaluar(nombre, modelo):
 
 # TODO 1: la linea base, un DummyRegressor que siempre predice la mediana
 # de la tarifa de entrenamiento.
-linea_base = DecisionTreeRegressor
+linea_base = DummyRegressor(strategy="median")
 evaluar("linea base", linea_base)
 
 # TODO 2: un arbol de decision (DecisionTreeRegressor) sin ningun limite,
@@ -92,6 +92,3 @@ tabla = pd.DataFrame(resultados)
 tabla.to_csv("resultados_ejercicio1.csv", index=False)
 print()
 print(tabla.to_string(index=False))
-
-if __name__ == __main__:
-    main
