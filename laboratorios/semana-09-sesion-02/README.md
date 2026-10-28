@@ -8,19 +8,13 @@
 
 ## Requisitos antes de esta sesión
 
-Instala scikit-learn:
-
-```
-pip install scikit-learn
-```
-
-Verifica con:
+scikit-learn ya viene en el Codespace. En tu laptop, instálalo con `pip install -r requirements.txt` desde la raíz del repositorio. Verifica con:
 
 ```
 python3 -c "import sklearn; print(sklearn.__version__)"
 ```
 
-Este laboratorio usa `sparse_output=False` en `OneHotEncoder`, disponible desde scikit-learn 1.2. Si tu versión es anterior, actualízala con `pip install --upgrade scikit-learn`.
+Este laboratorio usa `sparse_output=False` en `OneHotEncoder`, disponible desde scikit-learn 1.2. El `requirements.txt` del repositorio ya fija una versión posterior.
 
 Ten a mano el script de features de tu proyecto de la sesión pasada.
 
@@ -44,17 +38,22 @@ Solo con los de **entrenamiento**. Si la media y la desviación se calculan con 
 
 ## Ejercicio 1: encontrar y corregir la fuga
 
-Enunciado: [`starter/viajes_features.csv`](./starter/viajes_features.csv) tiene los viajes de taxi con las features de la sesión pasada, sin los errores confirmados, y con la distancia 0 y los 0 pasajeros marcados como faltantes. Un compañero imputa y escala la distancia y los pasajeros con todo el dataset, después divide en entrenamiento y prueba, y entrena una regresión lineal. El código está en la diapositiva.
+Archivo: [`starter/ejercicio1_fuga.py`](./starter/ejercicio1_fuga.py), sobre [`starter/viajes_features.csv`](./starter/viajes_features.csv): los viajes de taxi con las features de la sesión pasada, sin los errores confirmados, y con la distancia 0 y los 0 pasajeros marcados como faltantes. La primera parte del script es el código de un compañero: imputa y escala la distancia y los pasajeros con todo el dataset, después divide en entrenamiento y prueba, y entrena una regresión lineal. La segunda parte es la versión correcta, con 3 `TODO`. Córrelo una vez antes de tocar nada:
 
-**Respuesta 1, antes de ver la solución:** ¿en qué línea entra el conjunto de prueba al entrenamiento?
+```
+cd laboratorios/semana-09-sesion-02/starter
+python3 ejercicio1_fuga.py
+```
+
+**Respuesta 1, antes de ver la solución:** en la versión del compañero, ¿en qué línea entra el conjunto de prueba al entrenamiento? ¿Qué número de la salida lo delata?
 
 En la línea que imputa con todo el dataset, `SimpleImputer(strategy="median").fit_transform(X[NUMERICAS])`, antes de `train_test_split`: la mediana de la distancia ya incluye los viajes de prueba. Vuelve a entrar en la línea siguiente, cuando `StandardScaler().fit_transform` calcula la media y la desviación estándar con todas las filas. En ambos casos, el problema es el `fit` sobre datos que incluyen la prueba.
 
-**Respuesta 2:** ¿cuánto esperas que cambie el error absoluto medio en prueba al corregir la fuga? Si casi no cambia, ¿significa que no había fuga?
+**Respuesta 2 (TODO 1 y 3):** sin resolver, la versión correcta dice que tiene 2975 filas de prueba. ¿Qué está midiendo ese error, si prueba y entrenamiento son las mismas filas?
 
 Muy poco: el MAE pasa de **2.5276** con fuga a **2.5274** corregido (diferencia de −0.0002). Que casi no cambie **no significa que no hubiera fuga**. La fuga está en el procedimiento: la prueba dejó de ser datos que el modelo nunca vio. Aquí es pequeña porque la mediana y la media de 2975 viajes casi no se mueven al quitar el 20% (mediana de distancia 6.93 vs 6.94; pasajeros 1 en ambas). Con pocos datos, con una estadística sensible (media, máximo) o con un *target encoding*, la misma fuga sí infla la métrica. Y en producción no hay "todo el dataset" para recalcular: el procedimiento con fuga ni siquiera se puede reproducir.
 
-**La formulación completa, tal como la resuelvo yo:**
+**Respuesta 3:** ¿cuánto esperas que cambie el error absoluto medio en prueba al corregir la fuga? Si casi no cambia, ¿significa que no había fuga?
 
 Script: [`ejercicio1/fuga.py`](./ejercicio1/fuga.py), que corre las dos versiones con la misma división (`random_state=42`). La corregida divide primero y después hace el `fit` del imputador y el escalador **solo con entrenamiento**. Aplica `transform` a entrenamiento y prueba:
 
@@ -95,7 +94,11 @@ _(tu respuesta)_
 
 ## Ejercicio 2: el pipeline completo
 
-Solo o en pareja. Parte de la plantilla [`plantilla-ejercicio2/pipeline_completo.py`](./plantilla-ejercicio2/pipeline_completo.py) y córrela desde su carpeta. Completa los 5 `TODO`: división, `ColumnTransformer` con tres grupos de columnas, `fit` solo con entrenamiento, verificación de las medianas, y un viaje desde una zona que el entrenamiento nunca vio.
+Solo o en pareja. Archivo: [`starter/ejercicio2_pipeline.py`](./starter/ejercicio2_pipeline.py), sobre el mismo `viajes_features.csv`. Completa los 5 `TODO`: división, `ColumnTransformer` con tres grupos de columnas, `fit` solo con entrenamiento, verificación de las medianas, y un viaje desde una zona que el entrenamiento nunca vio. Al final, el script imprime una comprobación por TODO: complétalos hasta que todas digan `OK`.
+
+```
+python3 ejercicio2_pipeline.py
+```
 
 **Respuesta 1:** ¿cuántas columnas quedan después de preparar los datos? Explica de dónde sale ese número a partir de los tres grupos de columnas.
 

@@ -36,17 +36,22 @@ Creando columnas que codifiquen ese conocimiento, porque el modelo solo aprende 
 
 ## Ejercicio 1: features de fecha y hora
 
-Enunciado: [`starter/viajes_taxi.csv`](./starter/viajes_taxi.csv), el mismo dataset de la sesión pasada, sin los errores confirmados. A partir de `fecha_hora_inicio`, construir hora, día de la semana, fin de semana, hora pico y la hora como ciclo, y comprobar si la hora pico aporta algo a la tarifa.
+Archivo: [`starter/ejercicio1_features_tiempo.py`](./starter/ejercicio1_features_tiempo.py), sobre [`starter/viajes_taxi.csv`](./starter/viajes_taxi.csv), el mismo dataset de la sesión pasada. El script ya quita los errores confirmados, convierte `fecha_hora_inicio` y compara la tarifa por kilómetro según la hora pico; faltan 4 `TODO`: hora, día de la semana, fin de semana, hora pico y la hora como ciclo. Córrelo una vez antes de tocar nada:
 
-**Respuesta 1, antes de ver la solución:** si dejas la hora como un número del 0 al 23, ¿qué tan lejos queda la hora 23 de la hora 0 para un modelo que mide distancias entre números? ¿Y en el reloj?
+```
+cd laboratorios/semana-09-sesion-01/starter
+python3 ejercicio1_features_tiempo.py
+```
+
+**Respuesta 1 (TODO 4), antes de ver la solución:** si dejas la hora como un número del 0 al 23, ¿qué tan lejos queda la hora 23 de la hora 0 para un modelo que mide distancias entre números? ¿Y en el reloj?
 
 Como números, la hora 23 queda a **23 unidades** de la hora 0, la mayor distancia posible. En el reloj están a **1 hora**: las 23:00 y las 00:00 son vecinas, y las 23:00 se parecen más a la medianoche que a las 12:00. Por eso se codifica como ciclo con seno y coseno: así la 23 y la 0 quedan juntas en el círculo.
 
-**Respuesta 2:** la duración del viaje no existe al pedir el taxi, pero la hora sí. ¿Qué parte de lo que la duración le diría al modelo puede traer `es_hora_pico`?
+**Respuesta 2 (TODO 3):** sin el TODO 3, el Paso 4 muestra un solo grupo. Con la hora pico construida, ¿esperas que la tarifa por kilómetro sea más alta o más baja en hora pico? ¿Por qué, si la tarifa depende de la distancia y de la duración?
 
 La parte del **tráfico**. La duración le dice al modelo que un viaje fue lento, y en hora pico los viajes son más lentos por la misma distancia. Sin contar JFK, la mediana es de **3.64 minutos por km en hora pico** contra **2.81** fuera de ella, y la tarifa por km pasa de **3.23 a 3.53 USD**. `es_hora_pico` trae ese efecto promedio, que sí se conoce al pedir el taxi. Lo que no trae es la variación de un viaje concreto: un accidente o un desvío solo se ven en la duración real.
 
-**La formulación completa, tal como la resuelvo yo:**
+**Respuesta 3:** la duración del viaje no existe al pedir el taxi, pero la hora sí. ¿Qué parte de lo que la duración le diría al modelo puede traer `es_hora_pico`?
 
 Script de clase: [`starter/mi_primer_feature_eng.py`](./starter/mi_primer_feature_eng.py), que corre con `docker compose up --build` desde esta carpeta.
 
@@ -79,7 +84,11 @@ _(tu respuesta)_
 
 ## Ejercicio 2: zona, codificación y disponibilidad
 
-Solo o en pareja. Parte de la plantilla [`plantilla-ejercicio2/features_de_zona.py`](./plantilla-ejercicio2/features_de_zona.py) y córrela desde su carpeta. Completa los 4 `TODO`.
+Solo o en pareja. Archivo: [`starter/ejercicio2_features_zona.py`](./starter/ejercicio2_features_zona.py), sobre el mismo `viajes_taxi.csv`. Completa los 4 `TODO`. Al final, el script imprime una comprobación por TODO: complétalos hasta que todas digan `OK`.
+
+```
+python3 ejercicio2_features_zona.py
+```
 
 **Respuesta 1:** ¿cuántos viajes tienen `es_tarifa_fija` en 1, y qué tarifa mínima y máxima tienen? ¿Qué te dice eso sobre lo que un modelo lineal puede aprender con esta columna?
 
