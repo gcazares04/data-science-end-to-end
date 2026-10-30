@@ -16,17 +16,17 @@ A partir de la lectura previa:
 
 **Según el artículo, ¿qué es un ensamblaje, y en qué se diferencian bagging y boosting en la forma de combinar sus modelos?**
 
-_(tu respuesta)_
+Un ensamblaje combina las predicciones de varios modelos (casi siempre árboles) para obtener una sola, más estable que la de cualquiera de ellos. En bagging los modelos se entrenan en paralelo e independientes, cada uno sobre una muestra con reemplazo de los datos (y en el bosque aleatorio, con un subconjunto de columnas en cada corte), y al final se promedian o votan; sobre todo reduce la varianza. En boosting se entrenan en secuencia: cada modelo nuevo se enfoca en lo que los anteriores predijeron mal (en gradient boosting, ajusta los residuos) y se suma con un peso chico; sobre todo reduce el sesgo, pero puede sobreajustar si se agregan demasiados.
 
 **¿Por qué un promedio de muchos árboles puede equivocarse menos que el mejor de esos árboles por separado?**
 
-_(tu respuesta)_
+Porque cada árbol, entrenado con otra muestra y otras columnas, se equivoca de forma distinta: un árbol profundo memoriza ruido de su muestra. Si los errores no están muy correlacionados, al promediar se cancelan entre sí y queda la parte que todos aciertan. El promedio conserva el bajo sesgo de los árboles profundos y baja mucho su varianza, algo que ningún árbol solo puede hacer. Además, "el mejor árbol" se elige mirando los datos, y en datos nuevos no suele seguir siendo el mejor.
 
 ## Pregunta de apertura
 
 Ya tienes los datos listos para entrenar. Si entrenas dos modelos sobre el mismo conjunto y uno da un error mucho menor en entrenamiento que en prueba, ¿qué le está pasando?
 
-_(tu respuesta)_
+Está sobreajustando: aprendió detalles y ruido de las filas de entrenamiento que no se repiten en datos nuevos, así que memoriza en vez de generalizar. Lo que importa es el error de prueba; para cerrar la brecha se regulariza (menos profundidad, más filas por hoja, castigo como en Ridge) o se consiguen más datos.
 
 ## Ejercicio 1: línea base, un árbol y un bosque
 
@@ -124,7 +124,7 @@ Un script, en la carpeta de tu proyecto, que entrene con tu pipeline:
 
 Una fila por modelo, con la métrica de tu proyecto en entrenamiento y en prueba, la brecha y los segundos de entrenamiento.
 
-Script: [`plantilla-modelos/modelos_proyecto.py`](./plantilla-modelos/modelos_proyecto.py). Tabla: [`plantilla-modelos/resultados_proyecto.csv`](./plantilla-modelos/resultados_proyecto.csv).
+Script: [`proyecto/modelos_proyecto.py`](./proyecto/modelos_proyecto.py). Tabla: [`proyecto/resultados_proyecto.csv`](./proyecto/resultados_proyecto.csv).
 
 Usa el mismo archivo, las mismas columnas y la misma división por fecha que el pipeline de la Semana 9: 123 awards de entrenamiento (1988 a 2019) y 46 de prueba (2020 a 2025). La métrica es el **MAE sobre `log10(monto)`**, que se lee como un factor: un MAE de 0.36 es equivocarse en promedio por un factor de 10^0.36 ≈ 2.3× en el monto.
 
@@ -182,4 +182,4 @@ Para mejorar haría falta información que sí explique el monto, como el progra
 
 Para estimar la tarifa de un viaje, podrías entrenar un ensamblaje, entrenar una red neuronal o escribirle a un LLM los datos del viaje y pedirle un número. ¿Qué tendrías que medir de cada opción, además del error, para decidir cuál usar en la app de taxis?
 
-_(tu respuesta)_
+Cuánto tarda en responder cada predicción y cuánto cuesta (entrenar una vez frente a pagar por cada llamada al LLM), si da siempre la misma tarifa para el mismo viaje, si se puede explicar por qué una tarifa salió así y qué tan fácil es reentrenarlo o mantenerlo cuando cambian los precios.
