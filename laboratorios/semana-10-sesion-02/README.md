@@ -41,19 +41,27 @@ python3 ejercicio1_red_neuronal.py
 
 **Respuesta 1 (TODO 1):** sin resolver, la red sale peor que el ensamblaje y aparece una advertencia `ConvergenceWarning`. ¿Qué crees que significa? ¿Qué esperas al dejarla entrenar hasta 1000 iteraciones?
 
-_(tu respuesta)_
+Que el optimizador llegó al tope de iteraciones (200 por defecto) sin que el error dejara de bajar: la red quedó a medio entrenar, no es que el modelo sea malo. Con 1000 iteraciones espero que converja y que el error baje bastante, quizá al nivel del ensamblaje, a cambio de tardar más en entrenar.
 
 **Respuesta 2 (TODO 2):** una capa oculta de 64 neuronas recibe las 25 columnas preparadas y entrega una tarifa. ¿Cuántos números tiene que aprender?
 
-_(tu respuesta)_
+25 × 64 pesos de entrada a la capa oculta, más 64 sesgos de la capa oculta, más 64 pesos de la capa oculta a la salida, más 1 sesgo de salida: 1600 + 64 + 64 + 1 = 1729.
 
 **Respuesta 3 (TODO 3):** ¿qué columna esperas que el ensamblaje use más? Si la app le muestra al conductor por qué la tarifa estimada es 70 dólares, ¿cuál de los dos modelos te permite responder?
 
-_(tu respuesta)_
+La distancia, porque la tarifa se cobra por kilómetro; después `es_tarifa_fija`, que explica los 70 dólares de aeropuerto. El ensamblaje permite responder: sus importancias dicen qué columnas pesan, y una tarifa de 70 sale de los árboles que separan `es_tarifa_fija = 1`. La red reparte la decisión en 1729 pesos sin significado individual; para explicarla haría falta una técnica externa como SHAP.
 
 **Lo que confirmó la salida, TODO por TODO:**
 
-_(anota el error y el tiempo de cada modelo, los parámetros de la red y las 3 columnas más importantes)_
+| Modelo | Error entrenamiento | Error prueba | Tiempo |
+|---|---|---|---|
+| Gradient boosting | 1.07 | 1.28 | 0.12 s |
+| Red neuronal, sin resolver (200 iteraciones, `ConvergenceWarning`) | 1.60 | 1.69 | 0.34 s |
+| Red neuronal, 1000 iteraciones | 1.09 | 1.17 | 1.03 s |
+
+- La advertencia desapareció con 1000 iteraciones y la red pasó de 1.69 a 1.17 de error: terminó un poco mejor que el ensamblaje en prueba, pero tardó unas 8 veces más en entrenar.
+- Parámetros de la red: 1729, como en la cuenta de la Respuesta 2.
+- Las 3 columnas más importantes: `numericas__distancia_km` (0.9824), `ya_listas__es_tarifa_fija` (0.0120) y `ya_listas__es_hora_pico` (0.0028). La distancia se lleva casi todo, como esperaba.
 
 ## Durante el ConcepTest
 
