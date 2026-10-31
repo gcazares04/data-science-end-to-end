@@ -91,23 +91,27 @@ python3 ejercicio2_tres_soluciones.py
 
 **Respuesta 1:** ¿qué LLM usaste? Completa la tabla con los números de tu corrida.
 
+Usé Claude Sonnet 5.5, con el prompt pegado tal cual en una conversación nueva (sin acceso al CSV). Precio: 2 dólares por millón de tokens de entrada.
+
 | | Error en los 20 viajes | Costo de entrenar | Costo de 10 000 viajes al mes | ¿Puedes explicar una predicción? |
 |---|---|---|---|---|
-| Gradient boosting | _(…)_ | _(…)_ | _(…)_ | _(…)_ |
-| Red neuronal | _(…)_ | _(…)_ | _(…)_ | _(…)_ |
-| LLM | _(…)_ | _(…)_ | _(…)_ | _(…)_ |
+| Gradient boosting | 0.90 dólares | 0.12 s en la laptop | prácticamente 0 (predice 10 000 filas en milisegundos) | Sí, a nivel global: la importancia de columnas dice que la distancia pesa 0.98 de todo, y se puede inspeccionar cada árbol |
+| Red neuronal | 0.96 dólares | 1.0 s en la laptop | prácticamente 0 | Difícil: son 1729 pesos sin significado individual |
+| LLM | 1.32 dólares | 0 (no se entrena, aprende de 30 ejemplos en el prompt) | 0.73 dólares: 500 prompts × 726 tokens × 2 $/M | Puede escribir una explicación, pero no hay garantía de que sea la razón real del número |
+
+El gradient boosting gana en error y costo. El LLM acierta los viajes de aeropuerto con tarifa fija de 70 porque los ve en los ejemplos, pero en los viajes cortos se desvía más que los modelos entrenados con 2380 filas.
 
 **Respuesta 2:** corre el mismo prompt otra vez, en una conversación nueva. ¿Te dio los mismos 20 números? ¿Qué problema le trae eso a una app que le cobra al pasajero?
 
-_(tu respuesta)_
+No. Corrí el mismo prompt en una conversación nueva (guardado en `starter/respuestas_llm_segunda_corrida.txt`) y cambiaron 15 de los 20 números. Los cambios son pequeños, el más grande fue de 1 dólar (16.0 contra 15.0 en Lower Manhattan → Midtown, 3.73 km), y el error promedio casi no se movió (1.32 a 1.31); los tres viajes de tarifa fija de aeropuerto siguieron en 70. Para una app que cobra, eso significa que el mismo viaje, cotizado dos veces, puede salir con dos precios distintos: no se puede reproducir ni auditar una tarifa, y un pasajero que compara cotizaciones lo vería como arbitrario. El gradient boosting, con los mismos datos y el mismo `random_state`, devuelve siempre el mismo número.
 
 **Respuesta 3:** busca en tus 20 respuestas la peor predicción del LLM. ¿Qué tiene de particular ese viaje? ¿Lo habría aprendido el ensamblaje con las 2380 filas de entrenamiento?
 
-_(tu respuesta)_
+La peor fue JFK Airport → JFK Airport, 1.01 km: el LLM dijo 7.6 y la tarifa real era 11.46 (error 3.86). Es un viaje que sale y llega al aeropuerto, muy corto, y entre los 30 ejemplos no hay ninguno parecido; el LLM lo trató como un viaje corto en Manhattan (los de ~1 km cuestan 7). Los dos únicos ejemplos de JFK tienen tarifa fija de 70, así que no tenía de dónde sacar que un viaje corto dentro del aeropuerto cuesta más. El ensamblaje lo aproximó mejor (12.74, error 1.28): en todo el CSV hay 9 viajes JFK → JFK, con 1.8 km y 14.29 dólares en promedio, así que en las 2380 filas de entrenamiento vio algunos y aprendió que ese viaje corto cuesta más que uno en Manhattan. Con tan pocos casos no lo aprende bien, pero tiene más información que los 30 ejemplos del prompt.
 
 **Si terminas antes:** el error en los 20 viajes de muestra no es el mismo que en los 595 de prueba. ¿Por qué no se mide el LLM sobre los 595, y qué tan confiable es una comparación sobre 20?
 
-_(tu respuesta)_
+Porque hay que pegar a mano 30 prompts en el chat (o pagar y programar las llamadas a la API), y un prompt con los 595 viajes sería largo y el modelo podría perder el orden o saltarse filas. Con 20 viajes la comparación es poco confiable: un solo viaje raro cambia el promedio (el JFK → JFK aporta 0.19 de los 1.32 del LLM), y la propia muestra no se parece a la prueba completa: el gradient boosting tiene 0.90 en los 20 y 1.28 en los 595. Sirve para ver órdenes de magnitud y tipos de error, no para decidir entre modelos que estén cerca.
 
 ## Ejercicio 3: ¿qué solución conviene para tu proyecto?
 
