@@ -1,0 +1,4 @@
+modelo,mae_log_prueba,factor_prueba,mae_log_10_awards,segundos,parametros,iteraciones
+gradient boosting regularizado,0.3742,2.37,0.2441,0.025,,
+red neuronal,0.3386,2.18,0.176,0.055,369.0,633.0
+LLM (30 ejemplos en el prompt),,,0.2582,0.0,,

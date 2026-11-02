@@ -1,0 +1,47 @@
+Estimas el monto en dolares (USD) de un award de financiamiento de investigacion. Cada fila es un award: el funder que lo otorga, el tipo de financiamiento, la escala (individual = beca para una persona, proyecto, centro = financia un centro o programa), la duracion en anios, cuantas instituciones participan y si tiene descripcion (1 o 0). Abajo hay 30 awards con su monto real y 10 sin el. Responde solo con 10 numeros, uno por linea, en el mismo orden, sin texto adicional. Si un valor falta, esta vacio.
+
+Awards con monto:
+funder_name,funding_type,escala_financiamiento,duracion_anios,institutions_count,has_description,monto_usd
+National Science Foundation,grant,proyecto,4.0,1,1,176677
+National Science Foundation,grant,proyecto,3.0,1,1,300000
+Office of Science,grant,proyecto,9.0,2,1,211031477
+National Science Foundation,grant,proyecto,5.96,2,1,2193335
+National Science Foundation,grant,proyecto,1.08,1,1,98621
+National Science Foundation,grant,proyecto,4.0,1,1,350000
+National Science Foundation,grant,proyecto,7.0,1,1,2477158
+Office of Science,grant,proyecto,9.86,1,1,1034000
+National Science Foundation,grant,proyecto,7.0,1,1,1000000
+National Science Foundation,grant,proyecto,2.0,1,1,150000
+National Science Foundation,fellowship,individual,1.0,1,1,5400
+National Science Foundation,grant,proyecto,4.96,1,1,690486
+National Science Foundation,grant,proyecto,4.0,1,1,434939
+National Science Foundation,grant,proyecto,4.0,1,1,269625
+National Science Foundation,grant,proyecto,2.0,1,1,9700
+National Science Foundation,grant,proyecto,4.33,1,1,343408
+National Science Foundation,grant,proyecto,9.0,1,1,4999500
+National Science Foundation,grant,proyecto,6.0,1,1,285000
+U.S. Department of Energy,grant,proyecto,5.0,0,1,6713572
+U.S. Department of Energy,grant,proyecto,7.96,0,1,999499
+National Science Foundation,grant,proyecto,4.0,1,1,424386
+United States Agency for International Development,grant,proyecto,6.0,0,1,137062397
+John Templeton Foundation,research,proyecto,2.75,1,0,1369872
+Institute of Education Sciences,grant,proyecto,,0,1,10000000
+National Science Foundation,grant,proyecto,5.0,1,1,294000
+National Science Foundation,grant,proyecto,5.96,1,1,310762
+National Institutes of Health,grant,proyecto,1.0,1,1,600000
+National Institutes of Health,cooperative_agreement,centro,0.91,1,1,365000
+National Science Foundation,grant,proyecto,5.49,1,1,650000
+National Science Foundation,grant,proyecto,5.0,1,1,686385
+
+Awards sin monto:
+funder_name,funding_type,escala_financiamiento,duracion_anios,institutions_count,has_description
+National Science Foundation,grant,proyecto,4.0,0,1
+National Science Foundation,grant,proyecto,5.5,1,1
+National Science Foundation,grant,proyecto,2.96,1,1
+National Science Foundation,grant,proyecto,1.96,2,1
+National Science Foundation,grant,proyecto,4.58,1,1
+National Institutes of Health,research,proyecto,3.99,1,1
+National Science Foundation,grant,proyecto,3.0,1,1
+National Science Foundation,grant,proyecto,4.0,1,1
+National Science Foundation,grant,proyecto,5.0,1,1
+National Science Foundation,grant,proyecto,5.0,1,1

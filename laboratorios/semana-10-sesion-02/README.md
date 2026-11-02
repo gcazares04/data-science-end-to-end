@@ -129,9 +129,18 @@ Elige 10 filas de tu conjunto de prueba y escribe un prompt con algunas filas de
 
 Una tabla con las tres opciones (métrica, costo, explicabilidad) y un párrafo que diga cuál usarías en tu proyecto y por qué, con los números de tu tabla.
 
-_(tu tabla)_
+Archivos: [`proyecto/comparar_proyecto.py`](./proyecto/comparar_proyecto.py), [`proyecto/comparacion_proyecto.csv`](./proyecto/comparacion_proyecto.csv), [`proyecto/prompt_llm_proyecto.txt`](./proyecto/prompt_llm_proyecto.txt) y [`proyecto/respuestas_llm_proyecto.txt`](./proyecto/respuestas_llm_proyecto.txt).
 
-_(tu decisión)_
+Misma OBT, mismas columnas y misma división por fecha que la sesión pasada (123 awards de entrenamiento, 46 de prueba). Métrica: MAE sobre `log10(monto)`. El LLM fue Claude Sonnet 5.5 en una conversación nueva, con 30 awards de entrenamiento como ejemplos (con el monto en USD) y 10 awards de prueba sin monto.
+
+| | MAE log en prueba (46) | MAE log en los 10 awards | Costo | ¿Puedes explicar una predicción? |
+|---|---|---|---|---|
+| Gradient boosting regularizado | 0.374 (2.37×) | 0.244 (1.75×) | 0.03 s de entrenamiento; predecir es gratis | Sí: importancias de columnas y los árboles se pueden inspeccionar; el monto sale de grupos parecidos de entrenamiento |
+| Red neuronal (16 neuronas, `alpha=1`, `lbfgs`) | 0.339 (2.18×) | 0.176 (1.50×) | 0.06 s, 633 iteraciones, 369 parámetros | Difícil: 369 pesos sin significado individual |
+| LLM (Sonnet 5.5, 30 ejemplos) | no medido | 0.258 (1.81×) | ~760 tokens por cada 10 awards; hay que pagar por cada consulta | Puede justificar en texto, pero no es la razón real del número, y no es reproducible |
+
+
+Usaría el **gradient boosting regularizado** (o el Ridge de la sesión pasada, 0.361), no la red ni el LLM. La red gana en los números: 0.339 contra 0.374 en prueba, un factor de 2.18× contra 2.37×. Pero esa diferencia es de 46 awards, y elegí su configuración (capa chica, `alpha` alto) justamente porque con 123 filas sin regularizar sobreajusta; con tan pocos datos no me fío de una ventaja de 0.035. En GrantMatch el monto estimado se le muestra a un investigador que evalúa una convocatoria, y poder decir "se parece a los grants de NSF de 4 a 5 años, que pagan entre 300 y 600 mil" vale más que esa diferencia. El LLM quedó entre los dos en los 10 awards (0.258), pero respondió casi el mismo número para todos (entre 350 y 500 mil, salvo uno de 800 mil): copió la mediana de los ejemplos de NSF sin distinguir duración, y falló en los grants de más de un millón. Además los 10 de la muestra son casi todos grants de NSF, los más fáciles, y el LLM cuesta tokens por cada consulta y no da el mismo número dos veces. Cuando la OBT completa tenga más awards con monto, volvería a comparar la red contra el ensamblaje.
 
 ## Antes de la próxima sesión
 
