@@ -18,17 +18,17 @@ A partir de la lectura previa:
 
 **Según el artículo, ¿para qué tipo de datos y de problema conviene el aprendizaje automático clásico, y para cuál un LLM?**
 
-_(tu respuesta)_
+El ML clásico conviene para datos estructurados (tablas con columnas numéricas y categóricas) y problemas acotados de predicción: regresión, clasificación, detección de anomalías, donde hay un objetivo medible y datos etiquetados del propio dominio. Un LLM conviene para datos no estructurados, sobre todo texto, y para tareas de lenguaje abiertas: resumir, redactar, responder preguntas, clasificar texto con pocos ejemplos. Uno aprende patrones específicos de tus datos; el otro trae conocimiento general del lenguaje y se adapta con el prompt.
 
 **El artículo compara las dos opciones en datos, costo y explicabilidad. ¿Cuál de esas tres diferencias pesa más para tu proyecto?**
 
-_(tu respuesta)_
+Los datos. En GrantMatch el objetivo es el monto de un award a partir de columnas de la OBT (funder, tipo de financiamiento, duración, instituciones), que es justo el caso tabular del ML clásico, y solo tenemos 123 awards de entrenamiento con monto. Un LLM no ve esos 123 completos, solo los ejemplos que caben en el prompt, aunque puede aportar conocimiento general de cuánto suele pagar cada funder. La explicabilidad viene después: a un investigador hay que poder decirle de dónde sale un monto estimado.
 
 ## Pregunta de apertura
 
 Para estimar la tarifa de un viaje, podrías entrenar un ensamblaje, entrenar una red neuronal o escribirle a un LLM los datos del viaje y pedirle un número. ¿Qué tendrías que medir de cada opción, además del error, para decidir cuál usar en la app de taxis?
 
-_(tu respuesta)_
+El tiempo de respuesta por predicción (el pasajero espera la cotización en la app), el costo por predicción y el de entrenar, si da el mismo número para el mismo viaje (reproducibilidad), si se puede explicar la tarifa a un conductor o pasajero que reclama, y cuánto cuesta mantenerlo cuando cambian las tarifas o la ciudad.
 
 ## Ejercicio 1: una red neuronal frente al ensamblaje
 
@@ -148,4 +148,4 @@ Usaría el **gradient boosting regularizado** (o el Ridge de la sesión pasada, 
 
 Dos compañeros reportan errores distintos para "el mismo" gradient boosting sobre los mismos datos de taxis. ¿Qué tendrías que saber de cada corrida para descubrir por qué no coinciden?
 
-_(tu respuesta)_
+La versión de los datos (qué archivo y qué versión, idealmente un hash), la división entrenamiento/prueba y su `random_state`, los hiperparámetros y el `random_state` del modelo, el commit del código de preparación de features, y las versiones de Python, scikit-learn y pandas. Con eso se puede volver a correr cada experimento igual; es lo que el artículo propone versionar junto: datos, modelo y código.
