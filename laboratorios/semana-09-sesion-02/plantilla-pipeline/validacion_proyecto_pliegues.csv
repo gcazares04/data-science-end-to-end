@@ -1,0 +1,31 @@
+esquema,modelo,pliegue,filas_entrenamiento,filas_validacion,mae_log,mae_asimetrico,pct_subestimado_mitad
+temporal,ridge alpha=10 (final),1,29,28,0.5966,1.14,0.5714
+temporal,ridge alpha=10 (final),2,57,28,0.4793,0.7073,0.2143
+temporal,ridge alpha=10 (final),3,85,28,0.4478,0.6725,0.2143
+temporal,ridge alpha=10 (final),4,113,28,0.2804,0.4436,0.25
+temporal,ridge alpha=10 (final),5,141,28,0.4053,0.6433,0.2857
+temporal,red neuronal,1,29,28,0.766,1.5089,0.7143
+temporal,red neuronal,2,57,28,0.4102,0.5808,0.1786
+temporal,red neuronal,3,85,28,0.4179,0.6212,0.1786
+temporal,red neuronal,4,113,28,0.3351,0.5073,0.1786
+temporal,red neuronal,5,141,28,0.3459,0.5474,0.2857
+temporal,linea base (mediana),1,29,28,0.5726,1.0971,0.5357
+temporal,linea base (mediana),2,57,28,0.5801,0.9165,0.2857
+temporal,linea base (mediana),3,85,28,0.5254,0.804,0.1786
+temporal,linea base (mediana),4,113,28,0.318,0.536,0.2857
+temporal,linea base (mediana),5,141,28,0.4204,0.6745,0.2143
+aleatorio,ridge alpha=10 (final),1,135,34,0.4339,0.6164,0.2647
+aleatorio,ridge alpha=10 (final),2,135,34,0.3172,0.4734,0.2059
+aleatorio,ridge alpha=10 (final),3,135,34,0.3893,0.6308,0.2353
+aleatorio,ridge alpha=10 (final),4,135,34,0.5083,0.7805,0.3235
+aleatorio,ridge alpha=10 (final),5,136,33,0.4299,0.6267,0.2727
+aleatorio,red neuronal,1,135,34,0.3406,0.5123,0.2647
+aleatorio,red neuronal,2,135,34,0.2652,0.4064,0.1471
+aleatorio,red neuronal,3,135,34,0.4736,0.783,0.2353
+aleatorio,red neuronal,4,135,34,0.4384,0.7064,0.3529
+aleatorio,red neuronal,5,136,33,0.3441,0.4816,0.2121
+aleatorio,linea base (mediana),1,135,34,0.4648,0.7477,0.2647
+aleatorio,linea base (mediana),2,135,34,0.4163,0.688,0.2647
+aleatorio,linea base (mediana),3,135,34,0.4213,0.7008,0.2059
+aleatorio,linea base (mediana),4,135,34,0.5518,0.9219,0.3824
+aleatorio,linea base (mediana),5,136,33,0.5264,0.8204,0.3636
