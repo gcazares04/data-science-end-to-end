@@ -135,7 +135,7 @@ El archivo [`.github/workflows/pruebas.yml`](../../.github/workflows/pruebas.yml
 
 **Pega el enlace a la ejecución de GitHub Actions donde pasan tus pruebas:**
 
-_(tu respuesta)_
+https://github.com/gcazares04/data-science-end-to-end/actions/runs/42683817061 (las 6 pruebas de `psets/proyecto` pasan: `6 passed in 1.08s`).
 
 **¿Qué patrón elegiste para tu proyecto, y qué número de latencia lo decide?**
 
@@ -143,7 +143,7 @@ _(tu respuesta)_
 
 **Rompe a propósito una de tus pruebas (cambia un valor esperado), haz push y mira qué pasa en GitHub. Después arréglala. ¿Qué te dijo GitHub, y dónde lo viste?**
 
-_(tu respuesta)_
+Cambié en `test_una_fila_por_award` el valor esperado de 4 a 5 awards e hice push. En la pestaña **Actions** la ejecución del workflow `pruebas` apareció con una **cruz roja** en vez de la marca verde, y la misma cruz roja apareció junto al commit en la página principal del fork y en el historial de commits. Abriendo la ejecución, el paso que corre pytest estaba marcado como fallido y su log decía `FAILED psets/proyecto/modelado/test_pipeline_proyecto.py::test_una_fila_por_award - assert 4 == 5` y `1 failed, 5 passed`: el valor real (4), el esperado (5) y la línea exacta (54). GitHub además mandó un correo avisando que el workflow falló. Volví a poner 4, hice push y la siguiente ejecución quedó en verde. Lo útil es que el error lo detecta una máquina limpia en cada push, sin depender de que alguien se acuerde de correr las pruebas.
 
 ## Antes de la próxima sesión
 
