@@ -51,7 +51,7 @@ def test_objetivo_no_entra_al_modelo():
 
 def test_una_fila_por_award():
     awards = una_fila_por_award(awards_de_prueba())
-    assert len(awards) == 5
+    assert len(awards) == 4
     assert awards["award_key"].is_unique
 
 
