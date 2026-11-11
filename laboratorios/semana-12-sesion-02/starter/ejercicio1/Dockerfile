@@ -11,6 +11,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY preparacion_taxis.py features_taxis.py servicio.py modelo_tarifa.joblib ./
 EXPOSE 8000
 
-# TODO 5: el comando que levanta el servicio con uvicorn en el puerto 8000,
-# escuchando en todas las interfaces del contenedor (host 0.0.0.0).
-CMD ["uvicorn", "servicio:app", "--port", "8000"]
+# 0.0.0.0: escucha en todas las interfaces del contenedor, no solo en su
+# propio localhost, para que docker run -p lo alcance desde afuera.
+CMD ["uvicorn", "servicio:app", "--host", "0.0.0.0", "--port", "8000"]
