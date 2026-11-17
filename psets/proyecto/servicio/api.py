@@ -7,7 +7,6 @@ funcion con la que se entreno el modelo. Se levanta desde psets/proyecto/:
     uvicorn servicio.api:app --port 8000
 """
 
-import json
 import os
 from pathlib import Path
 
@@ -20,12 +19,13 @@ from modelado.pipeline_proyecto import FEATURES, agregar_features
 
 CARPETA = Path(__file__).parent
 RUTA_MODELO = Path(os.environ.get("RUTA_MODELO", CARPETA / "modelo.joblib"))
-RUTA_INFO = RUTA_MODELO.with_name("modelo_info.json")
+RUTA_VERSION = RUTA_MODELO.with_name("modelo_version.txt")
 
 # Sin modelo.joblib (en GitHub Actions, o antes de exportar) el servicio
 # arranca igual: /salud lo reporta y /estimar_monto responde 503.
+# version_modelo es la version de "grantmatch-monto" en el registro de MLflow.
 modelo = joblib.load(RUTA_MODELO) if RUTA_MODELO.exists() else None
-version_modelo = json.loads(RUTA_INFO.read_text())["run_id"] if RUTA_INFO.exists() else None
+version_modelo = RUTA_VERSION.read_text().strip() if RUTA_VERSION.exists() else None
 
 app = FastAPI(title="GrantMatch: monto estimado de un award")
 

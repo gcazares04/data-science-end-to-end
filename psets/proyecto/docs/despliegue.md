@@ -32,3 +32,22 @@ Todas salen del registro del award en el warehouse, que el job lee completo. Nin
 - **Cuándo cambiaría la decisión:** si GrantMatch dejara que un usuario cargue su propia convocatoria (un award que no está en el warehouse) y quisiera ver el monto estimado en ese momento. Ahí haría falta el patrón en línea, con una respuesta en menos de unos 500 ms.
 
 Cada fila de la tabla guarda la `version_modelo` (la huella del `.joblib` o el `run_id` de MLflow del candidato ridge `alpha=10`), para saber con qué modelo se estimó cada monto y recalcular solo lo que cambió cuando se reentrene.
+
+## Versionado y registro
+
+- **Nombre en el registro:** `grantmatch-monto`, en el registro de modelos del servidor de MLflow (`127.0.0.1:5050`, pestaña **Models**). Cada corrida de `python -m servicio.registrar_modelo [alpha]` entrena la ridge, guarda sus métricas en el experimento `grantmatch-registro` y crea una versión nueva; ninguna reemplaza a otra.
+- **En producción:** la **versión 1**, ridge `alpha=10`, con **MAE de 0.3608 en log10** sobre los awards desde 2020 (el monto estimado se equivoca en un factor de 2.30x en promedio). Es el mismo candidato final de la Semana 11: reproduce el MAE de su run `505f6532318444f3a3fc7a1f03785738`. La versión 2 (ridge `alpha=1`, MAE 0.3832) quedó registrada y sin alias.
+- **Criterio para mover el alias:** una versión nueva pasa a `produccion` solo si baja el MAE en log10 sobre el mismo corte por fecha (prueba desde 2020-01-01) y con la misma huella de datos, o si la huella cambió porque llegaron datos nuevos y el MAE no empeora. Como el error caro es subestimar una convocatoria grande, también se revisa que no aumente la subestimación en los awards de más de 1 M USD. Lo decide el equipo del proyecto; la decisión queda en el registro (qué versión tiene el alias) y en la descripción y las etiquetas de la versión en MLflow.
+- **Cómo sabe el contenedor qué versión sirve:** `servicio/exportar_modelo.py` baja la versión con el alias `produccion` a `servicio/modelo.joblib` y escribe su número en `servicio/modelo_version.txt`. La imagen copia los dos archivos, así que el contenedor no necesita llegar a MLflow. `/salud` y cada respuesta de `/estimar_monto` devuelven `version_modelo`.
+
+**Volver a la versión anterior** (desde `psets/proyecto/`, con MLflow levantado):
+
+```
+python -m servicio.promover <version_anterior>        # mueve el alias, no borra nada
+python servicio/exportar_modelo.py                    # baja esa version y su numero
+docker build -f servicio/Dockerfile -t grantmatch-monto .
+docker run --rm -p 8000:8000 grantmatch-monto
+curl localhost:8000/salud                             # version_modelo debe ser la anterior
+```
+
+Las estimaciones del lote nocturno guardan `version_modelo`, así que después de volver atrás se pueden recalcular solo las filas que estimó la versión descartada.

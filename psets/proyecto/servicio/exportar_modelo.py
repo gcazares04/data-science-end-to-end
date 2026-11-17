@@ -1,51 +1,34 @@
-"""Exporta el modelo final desde MLflow a servicio/modelo.joblib.
+"""Exporta la version en produccion de "grantmatch-monto" a servicio/modelo.joblib.
 
 Se corre desde psets/proyecto/, con el servidor de MLflow levantado:
 
-    python servicio/exportar_modelo.py            # el run con candidato=final
-    python servicio/exportar_modelo.py <run_id>   # un run concreto (para volver atras)
+    python servicio/exportar_modelo.py
 
-Deja tambien servicio/modelo_info.json con el run_id, que el servicio devuelve
-en cada respuesta como version_modelo. Ninguno de los dos archivos se sube.
+Toma la version con el alias "produccion" del registro y deja, junto al
+modelo, servicio/modelo_version.txt con su numero: el contenedor lleva los
+dos archivos y no necesita llegar al servidor de MLflow. Ninguno se sube.
 """
 
-import json
 import os
-import sys
-from datetime import datetime, timezone
 from pathlib import Path
 
 import joblib
 import mlflow
 import mlflow.sklearn
+from mlflow import MlflowClient
 
 CARPETA = Path(__file__).parent
-EXPERIMENTO = "grantmatch"
-
-
-def run_final():
-    runs = mlflow.search_runs(
-        experiment_names=[EXPERIMENTO],
-        filter_string="tags.candidato = 'final'",
-        order_by=["start_time DESC"],
-    )
-    if runs.empty:
-        sys.exit(f"No hay ningun run con candidato=final en el experimento {EXPERIMENTO}.")
-    return runs.iloc[0]["run_id"]
+NOMBRE = "grantmatch-monto"
+ALIAS = "produccion"
 
 
 def main():
     mlflow.set_tracking_uri(os.environ.get("MLFLOW_TRACKING_URI", "http://127.0.0.1:5050"))
-    run_id = sys.argv[1] if len(sys.argv) > 1 else run_final()
-    modelo = mlflow.sklearn.load_model(f"runs:/{run_id}/modelo")
+    version = MlflowClient().get_model_version_by_alias(NOMBRE, ALIAS).version
+    modelo = mlflow.sklearn.load_model(f"models:/{NOMBRE}/{version}")
     joblib.dump(modelo, CARPETA / "modelo.joblib")
-    info = {
-        "run_id": run_id,
-        "experimento": EXPERIMENTO,
-        "exportado": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-    }
-    (CARPETA / "modelo_info.json").write_text(json.dumps(info, indent=2) + "\n")
-    print(f"Modelo del run {run_id} exportado a servicio/modelo.joblib")
+    (CARPETA / "modelo_version.txt").write_text(f"{version}\n")
+    print(f"Version {version} de {NOMBRE} (@{ALIAS}) exportada a servicio/modelo.joblib")
 
 
 if __name__ == "__main__":

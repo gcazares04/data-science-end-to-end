@@ -29,7 +29,7 @@ class ModeloDePrueba:
 def cliente(monkeypatch):
     modelo = ModeloDePrueba()
     monkeypatch.setattr(api, "modelo", modelo)
-    monkeypatch.setattr(api, "version_modelo", "run-de-prueba")
+    monkeypatch.setattr(api, "version_modelo", "7")
     return TestClient(api.app), modelo
 
 
@@ -37,19 +37,26 @@ def test_salud(cliente):
     cliente, _ = cliente
     respuesta = cliente.get("/salud")
     assert respuesta.status_code == 200
-    assert respuesta.json() == {"estado": "ok", "modelo_cargado": True, "version_modelo": "run-de-prueba"}
+    assert respuesta.json() == {"estado": "ok", "modelo_cargado": True, "version_modelo": "7"}
 
 
 def test_estimacion_valida(cliente):
     cliente, modelo = cliente
     respuesta = cliente.post("/estimar_monto", json=AWARD)
     assert respuesta.status_code == 200
-    assert respuesta.json() == {"monto_estimado_usd": 100000.0, "log10_monto": 5.0, "version_modelo": "run-de-prueba"}
+    assert respuesta.json() == {"monto_estimado_usd": 100000.0, "log10_monto": 5.0, "version_modelo": "7"}
     assert list(modelo.recibido.columns) == FEATURES
     fila = modelo.recibido.iloc[0]
     assert fila["duracion_anios"] == pytest.approx(2.0)
     assert fila["escala_financiamiento"] == "proyecto"
     assert fila["has_description"] == 1
+
+
+def test_cada_estimacion_dice_que_version_la_calculo(cliente):
+    cliente, _ = cliente
+    respuesta = cliente.post("/estimar_monto", json=AWARD)
+    assert respuesta.status_code == 200
+    assert respuesta.json()["version_modelo"] == "7"
 
 
 def test_award_incompleto_se_estima(cliente):
