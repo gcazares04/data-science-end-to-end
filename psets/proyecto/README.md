@@ -53,14 +53,27 @@ Sin Docker: `uvicorn servicio.api:app --port 8000`. La documentación interactiv
 **3. Rutas.**
 
 - `GET /salud`: `{"estado": "ok", "modelo_cargado": true, "version_modelo": "1"}`.
-- `POST /estimar_monto`: recibe el award como está en el warehouse (`funder_name` obligatorio; `funding_type`, `duration_days`, `institutions_count` y `has_description` opcionales) y calcula las features con `agregar_features` de `modelado/pipeline_proyecto.py`. Devuelve el monto estimado en USD, su log10 y la versión de `grantmatch-monto` que lo estimó. Si falta `funder_name` o la duración es negativa, responde 422; si no hay modelo cargado, 503.
+- `POST /estimar_monto`: recibe el award como está en el warehouse (`funder_name` obligatorio; `funding_type`, `duration_days`, `institutions_count` y `has_description` opcionales) y calcula las features con `agregar_features` de `modelado/pipeline_proyecto.py`. Acepta también `award_key` (la llave del warehouse), que el lote manda para poder unir la estimación con el monto real. Devuelve el `id_prediccion`, el monto estimado en USD, su log10 y la versión de `grantmatch-monto` que lo estimó. Si falta `funder_name` o la duración es negativa, responde 422; si no hay modelo cargado, 503. Cada estimación queda en `monitoreo/predicciones.jsonl`.
+- `GET /metricas`: peticiones a `/estimar_monto`, errores de validación (422), errores del servidor (≥500) y latencia p50 y p95 en milisegundos.
 
 Ejemplo:
 
 ```
 $ curl -X POST localhost:8000/estimar_monto -H "Content-Type: application/json" \
     -d '{"funder_name": "National Science Foundation", "funding_type": "grant", "duration_days": 1094, "institutions_count": 1, "has_description": true}'
-{"monto_estimado_usd":313691.79,"log10_monto":5.4965,"version_modelo":"1"}
+{"id_prediccion":"5f0c...","monto_estimado_usd":313691.79,"log10_monto":5.4965,"version_modelo":"1"}
 ```
 
-**4. Pruebas.** Desde la raíz del fork, `pytest psets/proyecto -v` corre también `servicio/test_api.py`, con un modelo de prueba en vez de `modelo.joblib`.
+**4. Pruebas.** Desde la raíz del fork, `pytest psets/proyecto -v` corre también `servicio/test_api.py`, con un modelo de prueba en vez de `modelo.joblib`, y `monitoreo/test_desempeno.py`.
+
+## Monitoreo
+
+El monto real llega tarde (si el funder lo publica) o nunca, así que se vigilan tres capas: el sistema (`/metricas`), indicadores de la misma noche sin verdad (mediana del monto estimado, funders desconocidos, awards sin duración) y el MAE y el sesgo cuando el monto se publica, por año y por versión. Con el modelo exportado, desde `psets/proyecto/`:
+
+```
+python -m monitoreo.simular_lote           # el lote sobre los awards de prueba, con montos publicados 30 a 730 dias despues
+python -m monitoreo.desempeno              # al 2025-12-31
+python -m monitoreo.desempeno 2022-12-31   # con menos verdad
+```
+
+Las métricas, sus umbrales y los resultados de la simulación están en `docs/monitoreo.md`.
